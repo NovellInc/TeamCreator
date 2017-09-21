@@ -1,0 +1,186 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>TelegramBot</name>
+    </assembly>
+    <members>
+        <member name="T:TelegramBot.Models.ChatConfiguraion">
+            <summary>
+            Класс описывает конфигурацию чата.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Models.ChatConfiguraion._users">
+            <summary>
+            Пользователи чата.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Models.ChatConfiguraion.#ctor(System.Int64,System.Int32,DataModels.Models.User)">
+            <summary>
+            Инициализирует новый экземпляр класса <see cref="T:TelegramBot.Models.ChatConfiguraion"/>.
+            </summary>
+            <param name="chatId">Идентификатор чата.</param>
+            <param name="timezoneOffset">Часовой пояс.</param>
+            <param name="creator">Создатель чата.</param>
+        </member>
+        <member name="P:TelegramBot.Models.ChatConfiguraion.ChatId">
+            <summary>
+            Получает идентификатор чата.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.ChatConfiguraion.TimezoneOffset">
+            <summary>
+            Получает часовой пояс.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.ChatConfiguraion.Creator">
+            <summary>
+            Получает создателя чата.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.ChatConfiguraion.LastActivity">
+            <summary>
+            Получает или задает последнюю активность чата.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.ChatConfiguraion.Users">
+            <summary>
+            Получает или задает пользователей чата.
+            </summary>
+        </member>
+        <member name="T:TelegramBot.NinjectModules.CommonModule">
+            <summary>
+            Класс определяет привязки в приложении.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.NinjectModules.CommonModule.Log">
+            <summary>
+            Журнал событий.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.NinjectModules.CommonModule.Load">
+            <summary>
+            Загружает информацию в ядро.
+            </summary>
+        </member>
+        <member name="T:TelegramBot.Program">
+            <summary>
+            Класс программы.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Program.ServiceDescription">
+            <summary>
+            Описание сервиса.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Program.ServiceName">
+            <summary>
+            Наименование сервиса.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Program.ProgramLogger">
+            <summary>
+            Журнал событий.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Program.#cctor">
+            <summary>
+            Инициализирует статичные поля класса.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Program.Main(System.String[])">
+            <summary>
+            Входная точка программы.
+            </summary>
+            <param name="args">Аргументы командной строки.</param>
+        </member>
+        <member name="M:TelegramBot.Program.UnhandledExceptionHandler(System.Object,System.UnhandledExceptionEventArgs)">
+            <summary>
+            Обрабатывает событие необработанного исключения.
+            </summary>
+            <param name="sender">Инициатор события.</param>
+            <param name="e">Аргументы связанные с событием.</param>
+        </member>
+        <member name="T:TelegramBot.Services.ITelegramBotService">
+            <summary>
+            Интерфейс службы телеграм бота.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Services.ITelegramBotService.BotClient">
+            <summary>
+            Получает клиента телеграм бота.
+            </summary>
+        </member>
+        <member name="T:TelegramBot.Services.TelegramBotService">
+            <summary>
+            Служба телеграм бота.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Services.TelegramBotService.Log">
+            <summary>
+            Журнал событий.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Services.TelegramBotService._repository">
+            <summary>
+            Хранилище.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.#ctor(System.String,DataModels.Interfaces.IRepository)">
+            <summary>
+            Инициализирует новый экземпляр класса <see cref="T:TelegramBot.Services.TelegramBotService"/>.
+            </summary>
+            <param name="token">Токен бота.</param>
+            <param name="repository">Хранилище.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.Start">
+            <summary>
+            Запускает бота.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.Stop">
+            <summary>
+            Останавливает бота.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Services.TelegramBotService.BotClient">
+            <summary>
+            Получает клиента телеграм бота.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.OnMessage(System.Object,Telegram.Bot.Args.MessageEventArgs)">
+            <summary>
+            Обрабатывает событие получения сообщения.
+            </summary>
+            <param name="sender">Инициатор события.</param>
+            <param name="e">Параметры события.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.OnCallbackQuery(System.Object,Telegram.Bot.Args.CallbackQueryEventArgs)">
+            <summary>
+            Обрабатывает событие получения обратного вызова.
+            </summary>
+            <param name="sender">Инициатор события.</param>
+            <param name="e">Параметры события.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.SignIn(DataModels.Models.Player,Telegram.Bot.Types.Message)">
+            <summary>
+            Выполняет регистрацию игрока в системе.
+            </summary>
+            <param name="player">Игрок.</param>
+            <param name="message">Сообщение.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.NewGame(DataModels.Models.Player,Telegram.Bot.Types.Message)">
+            <summary>
+            Создаёт новую игру.
+            </summary>
+            <param name="player">Игрок.</param>
+            <param name="message">Сообщение.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.FixGame(DataModels.Models.Player,Telegram.Bot.Types.Message)">
+            <summary>
+            Изменяет параметры игры.
+            </summary>
+            <param name="player">Игрок.</param>
+            <param name="message">Сообщение.</param>
+        </member>
+    </members>
+</doc>
