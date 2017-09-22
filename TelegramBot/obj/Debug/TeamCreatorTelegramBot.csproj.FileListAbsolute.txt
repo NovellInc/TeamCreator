@@ -1,1 +1,0 @@
-c:\users\роман\documents\visual studio 2015\Projects\TeamCreator\TeamCreatorTelegramBot\bin\Debug\TeamCreatorTelegramBot.exe.config
