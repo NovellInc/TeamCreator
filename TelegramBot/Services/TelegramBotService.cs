@@ -13,6 +13,7 @@ using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 using Game = DataModels.Models.Game;
 
 namespace TelegramBot.Services
@@ -233,9 +234,30 @@ namespace TelegramBot.Services
         /// </summary>
         /// <param name="player">Игрок.</param>
         /// <param name="message">Сообщение.</param>
-        private void AddGame(Player player, Message message)
+        private async void AddGame(Player player, Message message)
         {
-            
+            ObjectId gameId;
+            ObjectId.TryParse(message.Text.Replace(DeleteGameCommand, string.Empty).Trim(), out gameId);
+            if (gameId.IsDefault())
+            {
+                await this.BotClient.SendTextMessageAsync(message.Chat, "Некорректный идентификатор");
+                return;
+            }
+
+            var game = this._repository.Get(new Game(gameId)).FirstOrDefault();
+            if (game == null)
+            {
+                await this.BotClient.SendTextMessageAsync(message.Chat, "Игра не существует");
+                return;
+            }
+            if (!game.Creator.Equals(player))
+            {
+                await this.BotClient.SendTextMessageAsync(message.Chat, "Только создатель игры может добавить игру");
+                return;
+            }
+
+            IReplyMarkup inlineMarkup = new InlineKeyboardMarkup();
+            await this.BotClient.SendTextMessageAsync(message.Chat, addGameMessage, replyMarkup: inlineMarkup);
         }
 
         /// <summary>
@@ -256,7 +278,7 @@ namespace TelegramBot.Services
             var game = this._repository.Get(new Game(gameId)).FirstOrDefault();
             if (game == null)
             {
-                await this.BotClient.SendTextMessageAsync(message.Chat, "Игра не существует или уже удалена");
+                await this.BotClient.SendTextMessageAsync(message.Chat, "Игра не существует");
                 return;
             }
             if (!game.Creator.Equals(player))

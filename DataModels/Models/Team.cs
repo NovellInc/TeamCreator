@@ -18,7 +18,7 @@ namespace DataModels.Models
         /// <summary>
         /// Получает или задает название команды.
         /// </summary>
-        public string TeamName { get; set; }
+        public string Name { get; set; }
 
         /// <summary>
         /// Получает или задает игроков команды.
