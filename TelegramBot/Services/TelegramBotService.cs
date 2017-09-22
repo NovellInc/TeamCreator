@@ -13,6 +13,7 @@ using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InlineKeyboardButtons;
 using Telegram.Bot.Types.ReplyMarkups;
 using Game = DataModels.Models.Game;
 
@@ -31,6 +32,9 @@ namespace TelegramBot.Services
         private const string DeleteGameCommand = "/deletegame";
         private const string AddGameCommand = "/addgame";
         private const string MyGamesCommand = "/mygames";
+        private const string JoinFirst = "joinfirst";
+        private const string JoinSecond = "joinsecond";
+        private const string Decline = "decline";
         #endregion
 
         private const string DateTimeFormat = @"HH:mm dd.MM.yyyy";
@@ -256,7 +260,20 @@ namespace TelegramBot.Services
                 return;
             }
 
-            IReplyMarkup inlineMarkup = new InlineKeyboardMarkup();
+            string addGameMessage = $"Игра: {game.Name}, тип: {game.KindOfSport.GetElementDescription()}, начало: {game.StartTime.ToString(DateTimeFormat)}\n" +
+                                    $"Первая команда:\n{string.Join("\n", game.FirstTeam.Players)}\n" +
+                                    $"Вторая команда:\n{string.Join("\n", game.SecondTeam.Players)}";
+            IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[]
+            {
+                new InlineKeyboardButton[]
+                {
+                    new InlineKeyboardCallbackButton("За первую", JoinFirst), new InlineKeyboardCallbackButton("За вторую", JoinSecond)
+                }, 
+                new InlineKeyboardButton[]
+                {
+                    new InlineKeyboardCallbackButton("Отказаться", Decline)
+                }, 
+            });
             await this.BotClient.SendTextMessageAsync(message.Chat, addGameMessage, replyMarkup: inlineMarkup);
         }
 
