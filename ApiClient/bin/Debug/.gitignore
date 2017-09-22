@@ -1,0 +1,17 @@
+/ApiClient.dll
+/ApiClient.pdb
+/DataModels.dll
+/DataModels.pdb
+/MongoDB.Bson.dll
+/MongoDB.Bson.xml
+/MongoDB.Driver.Core.dll
+/MongoDB.Driver.Core.xml
+/MongoDB.Driver.dll
+/MongoDB.Driver.xml
+/Newtonsoft.Json.dll
+/Newtonsoft.Json.xml
+/Ninject.dll
+/Ninject.xml
+/RestSharp.dll
+/RestSharp.xml
+/System.Runtime.InteropServices.RuntimeInformation.dll
