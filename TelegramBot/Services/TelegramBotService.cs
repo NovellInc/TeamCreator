@@ -7,6 +7,7 @@ using DataModels.Enums;
 using DataModels.Extensions;
 using DataModels.Interfaces;
 using DataModels.Models;
+using MongoDB.Bson;
 using NLog;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -24,12 +25,16 @@ namespace TelegramBot.Services
         #region Global commands
         private const string SignInCommand = "/signin";
         private const string NewGameCommand = "/newgame";
-        private const string SetGameTime = "/settime";
+        private const string SetGameTimeCommand = "/settime";
         private const string FixGameCommand = "/fixgame";
         private const string DeleteGameCommand = "/deletegame";
-        private const string AddGameToChat = "/addgame";
-        private const string MyGames = "/mygame";
+        private const string AddGameCommand = "/addgame";
+        private const string MyGamesCommand = "/mygames";
         #endregion
+
+        private const string DateTimeFormat = @"HH:mm dd.MM.yyyy";
+
+        private static readonly string GameInfo = "Название: {0}\nВид спорта: {1}\nВремя начала: {2}\nИдентификатор: {3}";
 
         /// <summary>
         /// Журнал событий.
@@ -37,9 +42,22 @@ namespace TelegramBot.Services
         private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
         /// <summary>
+        /// Словарь видов спорта.
+        /// </summary>
+        private static Dictionary<string, KindOfSport> KindOfSports;
+
+        /// <summary>
         /// Хранилище.
         /// </summary>
         private readonly IRepository _repository;
+
+        static TelegramBotService()
+        {
+            KindOfSports =
+                Enum.GetValues(typeof (KindOfSport))
+                    .Cast<KindOfSport>()
+                    .ToDictionary(selector => selector.GetElementDescription().ToLower(), selector => selector);
+        }
 
         /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="TelegramBotService"/>.
@@ -111,8 +129,26 @@ namespace TelegramBot.Services
                 Task.Run(() => this.FixGame(player, e.Message));
                 return;
             }
-        }
 
+            if (e.Message.Text.StartsWith(AddGameCommand))
+            {
+                Task.Run(() => this.AddGame(player, e.Message));
+                return;
+            }
+
+            if (e.Message.Text.StartsWith(DeleteGameCommand))
+            {
+                Task.Run(() => this.DeleteGame(player, e.Message));
+                return;
+            }
+
+            if (e.Message.Text.StartsWith(MyGamesCommand))
+            {
+                Task.Run(() => this.MyGames(player, e.Message));
+                return;
+            }
+        }
+        
         /// <summary>
         /// Обрабатывает событие получения обратного вызова.
         /// </summary>
@@ -159,9 +195,10 @@ namespace TelegramBot.Services
         {
             var parameters = message.Text.Replace(NewGameCommand, string.Empty).Trim().Split(new []{"\n", $"{Environment.NewLine}"}, StringSplitOptions.RemoveEmptyEntries);
             var game = new Game(player);
+            ObjectId gameId;
             if (parameters.All(string.IsNullOrEmpty))
             {
-                var gameId = this._repository.Add(game);
+                gameId = this._repository.Add(game);
                 await this.BotClient.SendTextMessageAsync(message.Chat, $"Создана игра. Идентификатор: {gameId}");
                 return;
             }
@@ -169,13 +206,17 @@ namespace TelegramBot.Services
             try
             {
                 game.Name = parameters[0];
-                game.KindOfSport = Enum.GetValues(typeof(KindOfSport)).Cast<KindOfSport>().First(kindOfSport => kindOfSport.GetClassDescription().Equals(parameters[1], StringComparison.InvariantCultureIgnoreCase));
-                game.StartTime = DateTime.ParseExact(parameters[2], "HH:mm dd.MM.yyyy", CultureInfo.InvariantCulture);
+                game.KindOfSport = KindOfSports[parameters[1].ToLower()];
+                game.StartTime = DateTime.ParseExact(parameters[2], DateTimeFormat, CultureInfo.InvariantCulture);
             }
             catch (Exception)
             {
                 await this.BotClient.SendTextMessageAsync(message.Chat, "Некорректные параметры");
+                return;
             }
+
+            gameId = this._repository.Add(game);
+            await this.BotClient.SendTextMessageAsync(message.Chat, $"Создана игра:\n{string.Format(GameInfo, game.Name, game.KindOfSport.GetElementDescription(), game.StartTime.ToString(DateTimeFormat), gameId)}");
         }
 
         /// <summary>
@@ -185,6 +226,75 @@ namespace TelegramBot.Services
         /// <param name="message">Сообщение.</param>
         private void FixGame(Player player, Message message)
         {
+        }
+
+        /// <summary>
+        /// Добавляет игру в чат.
+        /// </summary>
+        /// <param name="player">Игрок.</param>
+        /// <param name="message">Сообщение.</param>
+        private void AddGame(Player player, Message message)
+        {
+            
+        }
+
+        /// <summary>
+        /// Удаляет игру.
+        /// </summary>
+        /// <param name="player">Игрок.</param>
+        /// <param name="message">Сообщение.</param>
+        private async void DeleteGame(Player player, Message message)
+        {
+            ObjectId gameId;
+            ObjectId.TryParse(message.Text.Replace(DeleteGameCommand, string.Empty).Trim(), out gameId);
+            if (gameId.IsDefault())
+            {
+                await this.BotClient.SendTextMessageAsync(message.Chat, "Некорректный идентификатор");
+                return;
+            }
+
+            var game = this._repository.Get(new Game(gameId)).FirstOrDefault();
+            if (game == null)
+            {
+                await this.BotClient.SendTextMessageAsync(message.Chat, "Игра не существует или уже удалена");
+                return;
+            }
+            if (!game.Creator.Equals(player))
+            {
+                await this.BotClient.SendTextMessageAsync(message.Chat, "Только создатель игры может удалить игру");
+                return;
+            }
+
+            this._repository.Delete<Game>(game.Id);
+            await this.BotClient.SendTextMessageAsync(message.Chat, "Игра удалена");
+        }
+
+        /// <summary>
+        /// Получает информацию о незавершённых играх для игрока.
+        /// </summary>
+        /// <param name="player">Игрок.</param>
+        /// <param name="message">Сообщение.</param>
+        private async void MyGames(Player player, Message message)
+        {
+            if (message.Chat.Type != ChatType.Private)
+            {
+                await this.BotClient.SendTextMessageAsync(message.Chat, "Просматривать игры можно только в личном чате с ботом");
+                return;
+            }
+
+            var games = this._repository.Get(new Game(player));
+            if (games == null)
+            {
+                await this.BotClient.SendTextMessageAsync(message.Chat, "У Вас нет незавершённых игр");
+                return;
+            }
+
+            if (games.Count > 5)
+            {
+                //ToDo: менюшку со скроллингом
+            }
+
+            await this.BotClient.SendTextMessageAsync(message.Chat, string.Join($"{Environment.NewLine}{Environment.NewLine}", games.Select(game => string.Format(GameInfo, game.Name, game.KindOfSport.GetElementDescription(), game.StartTime.ToString(DateTimeFormat), game.Id))));
         }
     }
 }

@@ -14,15 +14,6 @@ namespace DataModels.Models
         /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="Player"/>.
         /// </summary>
-        /// <param name="nickname">Псевдоним игрока.</param>
-        public Player(string nickname)
-        {
-            this.Nickname = nickname;
-        }
-
-        /// <summary>
-        /// Инициализирует новый экземпляр класса <see cref="Player"/>.
-        /// </summary>
         /// <param name="telegramId">Идентификатор игрока в Telegram.</param>
         public Player(int telegramId)
         {
@@ -52,5 +43,22 @@ namespace DataModels.Models
         /// Получает или задает навыки игрока.
         /// </summary>
         public Skill[] Skills { get; set; }
+
+        private bool Equals(Player other)
+        {
+            return Id.Equals(other.Id);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj is Player && Equals((Player) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
     }
 }
