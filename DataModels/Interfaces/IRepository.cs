@@ -13,8 +13,10 @@ namespace DataModels.Interfaces
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="model">Фильтр.</param>
+        /// <param name="page">Номер страницы из выборки элементов.</param>
+        /// <param name="items">Количество элементов на странице.</param>
         /// <returns></returns>
-        List<TModel> Get<TModel>(TModel model);
+        List<TModel> Get<TModel>(TModel model, int page = 0, int items = int.MaxValue);
 
         /// <summary>
         /// Добавляет элемент в хранилище.

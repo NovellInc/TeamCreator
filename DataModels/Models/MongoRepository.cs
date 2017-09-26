@@ -36,10 +36,15 @@ namespace DataModels.Models
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="model">Модель объекта для поиска по указанным данным.</param>
+        /// <param name="page">Номер страницы из выборки элементов.</param>
+        /// <param name="items">Количество элементов на странице.</param>
         /// <returns>Возвращает список объектов.</returns>
-        public List<TModel> Get<TModel>(TModel model)
+        public List<TModel> Get<TModel>(TModel model, int page = 0, int items = int.MaxValue)
         {
-            return this.GetCollection<TModel>().Find(model.ToMongoFilter()).ToList();
+            return this.GetCollection<TModel>().Find(model.ToMongoFilter())
+                                               .Skip(page * items)
+                                               .Limit(items)
+                                               .ToList();
         }
 
         /// <summary>

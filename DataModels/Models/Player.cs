@@ -1,4 +1,6 @@
-﻿using DataModels.Helpers;
+﻿using System;
+using System.Globalization;
+using DataModels.Helpers;
 using DataModels.Interfaces;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -33,6 +35,16 @@ namespace DataModels.Models
         [BsonId]
         [JsonConverter(typeof(BsonObjectIdConverter))]
         public ObjectId Id { get; set; }
+
+        /// <summary>
+        /// Получает или задает часовой пояс, в котором находится игрок.
+        /// </summary>
+        public TimeZone TimeZone { get; set; }
+
+        /// <summary>
+        /// Получает или задает язык, выбранный пользователем для общения с ботом.
+        /// </summary>
+        public CultureInfo CultureInfo { get; set; }
 
         /// <summary>
         /// Получает или задает город игрока.
