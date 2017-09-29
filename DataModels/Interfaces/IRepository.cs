@@ -16,7 +16,7 @@ namespace DataModels.Interfaces
         /// <param name="page">Номер страницы из выборки элементов.</param>
         /// <param name="items">Количество элементов на странице.</param>
         /// <returns></returns>
-        List<TModel> Get<TModel>(TModel model, int page = 0, int items = int.MaxValue);
+        List<TModel> Get<TModel>(TModel model, int page = 1, int items = 0);
 
         /// <summary>
         /// Добавляет элемент в хранилище.

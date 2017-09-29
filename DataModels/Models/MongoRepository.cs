@@ -39,8 +39,18 @@ namespace DataModels.Models
         /// <param name="page">Номер страницы из выборки элементов.</param>
         /// <param name="items">Количество элементов на странице.</param>
         /// <returns>Возвращает список объектов.</returns>
-        public List<TModel> Get<TModel>(TModel model, int page = 0, int items = int.MaxValue)
+        public List<TModel> Get<TModel>(TModel model, int page = 1, int items = 0)
         {
+            if (page < 1)
+            {
+                return null;
+            }
+
+            if (items == 0)
+            {
+                return this.GetCollection<TModel>().Find(model.ToMongoFilter()).ToList();
+            }
+
             return this.GetCollection<TModel>().Find(model.ToMongoFilter())
                                                .Skip(page * items)
                                                .Limit(items)
