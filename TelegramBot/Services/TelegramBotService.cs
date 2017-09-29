@@ -44,9 +44,12 @@ namespace TelegramBot.Services
         private const string Decline = "decline";
         #endregion
 
-        private const string DateTimeFormat = @"HH:mm dd.MM.yyyy";
+        /// <summary>
+        /// Формат даты.
+        /// </summary>
+        private const string DateTimeFormat = @"H:mm d.MM.yyyy";
 
-        private static readonly string GameInfo = "Название: {0}\nВид спорта: {1}\nВремя начала: {2}\nИдентификатор: {3}";
+        private static readonly string GameInfo = "Название: {0}\nВид спорта: {1}\nВремя начала: {2}";
 
         /// <summary>
         /// Журнал событий.
@@ -158,7 +161,8 @@ namespace TelegramBot.Services
         /// Отправляет команды меню бота.
         /// </summary>
         /// <param name="message">Сообщение.</param>
-        private async void Menu(Message message)
+        /// <param name="fromCallback">Флаг указывает, что обращение к меню происходит из функции обратного вызова.</param>
+        private async void Menu(Message message, bool fromCallback = false)
         {
             string replyMessage = "Выберите действие:";
             IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(new InlineKeyboardButton[]
@@ -166,7 +170,14 @@ namespace TelegramBot.Services
                 new InlineKeyboardCallbackButton("Создать игру", ChooseKindOfSportCommand),
                 new InlineKeyboardCallbackButton("Мои игры", MyGamesCommand)
             });
-            await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, replyMessage, replyMarkup: inlineReplyMarkup);
+
+            if (fromCallback)
+            {
+                await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, replyMessage, replyMarkup: inlineReplyMarkup);
+                return;
+            }
+
+            await this.BotClient.SendTextMessageAsync(message.Chat, replyMessage, replyMarkup: inlineReplyMarkup);
         }
 
         /// <summary>
@@ -176,9 +187,12 @@ namespace TelegramBot.Services
         private void ParseGameParams(Message message)
         {
             ObjectId gameId;
-            if (!this._userGameConfigureSession.TryGetValue(message.From.Id, out gameId))
+            lock (this._userGameConfigureSession)
             {
-                return;
+                if (!this._userGameConfigureSession.TryGetValue(message.From.Id, out gameId))
+                {
+                    return;
+                }
             }
 
             var parameters = message.Text.Replace(NewGameCommand, string.Empty).Trim().Split(new[] { "\n", $"{Environment.NewLine}" }, StringSplitOptions.RemoveEmptyEntries);
@@ -192,7 +206,7 @@ namespace TelegramBot.Services
             try
             {
                 game = this._repository.Get(new Game(gameId)).First();
-                game.KindOfSport = KindOfSports[parameters[0].ToUpper()];
+                game.Name = parameters[0];
                 game.StartTime = DateTime.ParseExact(parameters[1], DateTimeFormat, CultureInfo.InvariantCulture);
             }
             catch (Exception)
@@ -201,7 +215,10 @@ namespace TelegramBot.Services
                 return;
             }
 
-            this._userGameConfigureSession.Remove(message.From.Id);
+            lock (this._userGameConfigureSession)
+            {
+                this._userGameConfigureSession.Remove(message.From.Id);
+            }
             this._repository.Update(game);
             this.SendGameParamsMessage(game, message, true);
         }
@@ -234,9 +251,19 @@ namespace TelegramBot.Services
                 return;
             }
 
+            if (e.CallbackQuery.Data.StartsWith(FinishCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                lock (this._userGameConfigureSession)
+                {
+                    this._userGameConfigureSession.Remove(e.CallbackQuery.From.Id);
+                }
+                Task.Run(() => this.Menu(e.CallbackQuery.Message, true));
+                return;
+            }
+
             if (e.CallbackQuery.Data.StartsWith(MenuCommand, StringComparison.OrdinalIgnoreCase))
             {
-                Task.Run(() => this.Menu(e.CallbackQuery.Message));
+                Task.Run(() => this.Menu(e.CallbackQuery.Message, true));
                 return;
             }
 
@@ -248,6 +275,15 @@ namespace TelegramBot.Services
 
             if (e.CallbackQuery.Data.StartsWith(NewGameCommand, StringComparison.OrdinalIgnoreCase))
             {
+                if (this._userGameConfigureSession.Keys.Contains(e.CallbackQuery.From.Id))
+                {
+                    return;
+                }
+
+                lock (this._userGameConfigureSession)
+                {
+                    this._userGameConfigureSession.Add(e.CallbackQuery.From.Id, ObjectId.Empty);
+                }
                 var kindOfSport = KindOfSports[e.CallbackQuery.Data.Replace(NewGameCommand, string.Empty).Trim()];
                 Task.Run(() => this.CreateGame(e.CallbackQuery.From.Id, e.CallbackQuery.Message, kindOfSport));
                 return;
@@ -255,13 +291,19 @@ namespace TelegramBot.Services
 
             if (e.CallbackQuery.Data.StartsWith(JoinFirst, StringComparison.OrdinalIgnoreCase))
             {
-                this.JoinGame(e.CallbackQuery.From.Id, e.CallbackQuery.Message, JoinFirst);
+                this.JoinGame(e.CallbackQuery.From.Id, e.CallbackQuery.Message, e.CallbackQuery.Data);
                 return;
             }
 
             if (e.CallbackQuery.Data.StartsWith(JoinSecond, StringComparison.OrdinalIgnoreCase))
             {
-                this.JoinGame(e.CallbackQuery.From.Id, e.CallbackQuery.Message, JoinSecond);
+                this.JoinGame(e.CallbackQuery.From.Id, e.CallbackQuery.Message, e.CallbackQuery.Data);
+                return;
+            }
+
+            if (e.CallbackQuery.Data.StartsWith(Decline, StringComparison.OrdinalIgnoreCase))
+            {
+                this.DeclineGame(e.CallbackQuery.From.Id, e.CallbackQuery.Message, e.CallbackQuery.Data);
                 return;
             }
 
@@ -317,9 +359,46 @@ namespace TelegramBot.Services
                 return;
             }
 
+            //if (game.FirstTeam == null && game.SecondTeam == null)
+            //{
+            //    if (joinTo.Equals(JoinFirst))
+            //    {
+            //        if (game.FirstTeam == null)
+            //        {
+            //            game.FirstTeam = new Team();
+            //        }
+
+            //        game.FirstTeam.Players.Add(player);
+            //        return;
+            //    }
+            //    if (joinTo.Equals(JoinSecond))
+            //    {
+            //        if (game.SecondTeam == null)
+            //        {
+            //            game.SecondTeam = new Team();
+            //        }
+
+            //        game.SecondTeam.Players.Add(player);
+            //        return;
+            //    }
+            //}
+
             if (joinTo.Equals(JoinFirst))
             {
-                if (game.FirstTeam.Players.Contains(player) || game.SecondTeam.Players.Contains(player))
+                if (game.FirstTeam == null && game.SecondTeam == null)
+                {
+                    game.FirstTeam = new Team();
+                }
+                else if (game.FirstTeam == null)
+                {
+                    if (game.SecondTeam.Players.Contains(player))
+                    {
+                        return;
+                    }
+                    game.FirstTeam = new Team();
+                }
+
+                if (game.FirstTeam.Players.Contains(player))
                 {
                     return;
                 }
@@ -328,7 +407,20 @@ namespace TelegramBot.Services
             }
             else
             {
-                if (game.FirstTeam.Players.Contains(player) || game.SecondTeam.Players.Contains(player))
+                if (game.SecondTeam == null && game.FirstTeam == null)
+                {
+                    game.SecondTeam = new Team();
+                }
+                else if (game.SecondTeam == null)
+                {
+                    if (game.FirstTeam.Players.Contains(player))
+                    {
+                        return;
+                    }
+                    game.SecondTeam = new Team();
+                }
+
+                if (game.SecondTeam.Players.Contains(player))
                 {
                     return;
                 }
@@ -338,6 +430,49 @@ namespace TelegramBot.Services
 
             this._repository.Update(game);
             this.SendGameParamsMessage(game, message, false);
+        }
+
+        /// <summary>
+        /// Производит отказ игрока от игры.
+        /// </summary>
+        /// <param name="playerId">Идентификатор игрока в Telegram.</param>
+        /// <param name="message">Сообщение.</param>
+        /// <param name="data">Данные для отказа от игры.</param>
+        private async void DeclineGame(int playerId, Message message, string data)
+        {
+            var player = this._repository.Get(new Player(playerId)).FirstOrDefault();
+            if (player == null)
+            {
+                return;
+            }
+
+            ObjectId gameId;
+            ObjectId.TryParse(data.Replace(Decline, string.Empty).Trim(), out gameId);
+
+            var game = this._repository.Get(new Game(gameId)).FirstOrDefault();
+            if (game == null)
+            {
+                await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, "Игра не существует");
+                return;
+            }
+
+            if (game.FirstTeam == null && game.SecondTeam == null)
+            {
+                return;
+            }
+
+            if (game.FirstTeam != null && game.FirstTeam.Players.Remove(player))
+            {
+                this._repository.Update(game);
+                this.SendGameParamsMessage(game, message, false);
+                return;
+            }
+
+            if (game.SecondTeam != null && game.SecondTeam.Players.Remove(player))
+            {
+                this._repository.Update(game);
+                this.SendGameParamsMessage(game, message, false);
+            }
         }
 
         /// <summary>
@@ -356,7 +491,7 @@ namespace TelegramBot.Services
                     {
                         new InlineKeyboardCallbackButton(ResourceManager.GetString("SignIn"), SignInCommand), 
                     });
-                    await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, replyMessage, replyMarkup: inlineReplyMarkup);
+                    await this.BotClient.SendTextMessageAsync(message.Chat, replyMessage, replyMarkup: inlineReplyMarkup);
                     return;
                 }
 
@@ -376,7 +511,7 @@ namespace TelegramBot.Services
             string replyMessage = "Выберите вид спорта:";
             IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(KindOfSports.Select(kind => new InlineKeyboardButton[]
                                                                                    {
-                                                                                       new InlineKeyboardCallbackButton(kind.Key, $"{NewGameCommand} {kind.Key}")
+                                                                                       new InlineKeyboardCallbackButton(kind.Value.GetElementDescription(), $"{NewGameCommand} {kind.Key}")
                                                                                    })
                                                                                    .Concat(new[] { new InlineKeyboardButton[] { new InlineKeyboardCallbackButton("Назад", MenuCommand)}})
                                                                                    .ToArray()
@@ -408,12 +543,15 @@ namespace TelegramBot.Services
             };
 
             var gameId = this._repository.Add(game);
-            this._userGameConfigureSession.Add(creatorId, gameId);
+            lock (this._userGameConfigureSession)
+            {
+                this._userGameConfigureSession[creatorId] = gameId;
+            }
             IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(new InlineKeyboardButton[]
             {
                 new InlineKeyboardCallbackButton("Завершить создание", FinishCommand)
             });
-            await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, "Игра создана. Введите название и дату начала игры в соответствии с приведённым ниже примером:\nРазминка\n20:00 06.10.2017");
+            await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, replyMarkup: inlineReplyMarkup, text: "Игра создана. Введите название и дату начала игры в соответствии с приведённым ниже примером:\nНазвание игры\n20:00 06.10.2017");
         }
 
         /// <summary>
@@ -439,11 +577,11 @@ namespace TelegramBot.Services
                 return;
             }
             
-            string firstTeamName = string.IsNullOrEmpty(game.FirstTeam.Name) ? "А" : game.FirstTeam.Name;
-            string secondTeamName = string.IsNullOrEmpty(game.SecondTeam.Name) ? "Б" : game.SecondTeam.Name;
+            string firstTeamName = string.IsNullOrEmpty(game.FirstTeam?.Name) ? "А" : game.FirstTeam.Name;
+            string secondTeamName = string.IsNullOrEmpty(game.SecondTeam?.Name) ? "Б" : game.SecondTeam.Name;
             string addGameMessage = string.Format(GameInfo, game.Name, game.KindOfSport.GetElementDescription(), game.StartTime.ToString(DateTimeFormat)) + "\n" +
-                                    $"{(game.FirstTeam.Players.Any() ? $"Команда {firstTeamName}:\n{string.Join(", ", game.FirstTeam.Players.Select(player => $"@{player.Nickname}"))}\n" : string.Empty)}" +
-                                    $"{(game.SecondTeam.Players.Any() ? $"Команда {secondTeamName}:\n{string.Join(", ", game.SecondTeam.Players.Select(player => $"@{player.Nickname}"))}" : string.Empty)}";
+                                    $"{(game.FirstTeam != null && game.FirstTeam.Players.Any() ? $"Команда {firstTeamName}:\n{string.Join(", ", game.FirstTeam.Players.Select(player => $"@{player.Nickname}"))}\n" : $"Команда {firstTeamName}:\n")}" +
+                                    $"{(game.SecondTeam != null && game.SecondTeam.Players.Any() ? $"Команда {secondTeamName}:\n{string.Join(", ", game.SecondTeam.Players.Select(player => $"@{player.Nickname}"))}" : $"Команда {secondTeamName}:\n")}";
             IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[]
             {
                 new InlineKeyboardButton[]
@@ -453,7 +591,7 @@ namespace TelegramBot.Services
                 }, 
                 new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton("Отказаться", Decline)
+                    new InlineKeyboardCallbackButton("Отказаться", $"{Decline} {game.Id}")
                 }, 
             });
 
