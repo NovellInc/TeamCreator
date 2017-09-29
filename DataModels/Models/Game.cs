@@ -20,6 +20,8 @@ namespace DataModels.Models
         public Game(Player creator)
         {
             Creator = creator;
+            this.FirstTeam = new Team();
+            this.SecondTeam = new Team();
         }
 
         /// <summary>
