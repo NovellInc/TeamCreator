@@ -20,8 +20,6 @@ namespace DataModels.Models
         public Game(Player creator)
         {
             Creator = creator;
-            this.FirstTeam = new Team();
-            this.SecondTeam = new Team();
         }
 
         /// <summary>
@@ -63,14 +61,19 @@ namespace DataModels.Models
         public string Name { get; set; }
 
         /// <summary>
-        /// Получает или задает признак приватности игры.
+        /// Получает или задает признак общедоступности игры.
         /// </summary>
-        public bool IsPrivate { get; set; }
+        public bool IsPublic { get; set; }
 
         /// <summary>
         /// Получает или задает начало игры.
         /// </summary>
         public DateTime StartTime { get; set; }
+
+        /// <summary>
+        /// Получает или задает максимальное количество игроков в команде.
+        /// </summary>
+        public int PlayersPerTeam { get; set; }
 
         /// <summary>
         /// Получает или задает первую команду.
