@@ -25,6 +25,15 @@ namespace DataModels.Models
         /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="Player"/>.
         /// </summary>
+        /// <param name="id">Идентификатор в MongoDB.</param>
+        public Player(ObjectId id)
+        {
+            this.Id = id;
+        }
+
+        /// <summary>
+        /// Инициализирует новый экземпляр класса <see cref="Player"/>.
+        /// </summary>
         internal Player()
         {
         }
