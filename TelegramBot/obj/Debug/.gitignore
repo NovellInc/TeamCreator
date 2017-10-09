@@ -10,3 +10,4 @@
 /TelegramBot.Resources.MessageStrings.en-EN.resources
 /TelegramBot.Resources.MessageStrings.resources
 /TelegramBot.Resources.MessageStrings.ru-RU.resources
+*.Cache
