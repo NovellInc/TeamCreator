@@ -11,3 +11,4 @@
 /TelegramBot.Resources.MessageStrings.resources
 /TelegramBot.Resources.MessageStrings.ru-RU.resources
 *.Cache
+*.csproj.GenerateResource.Cache
