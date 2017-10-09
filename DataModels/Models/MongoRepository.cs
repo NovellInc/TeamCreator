@@ -52,7 +52,7 @@ namespace DataModels.Models
             }
 
             return this.GetCollection<TModel>().Find(model.ToMongoFilter())
-                                               .Skip(page * items)
+                                               .Skip((page - 1) * items)
                                                .Limit(items)
                                                .ToList();
         }
