@@ -36,6 +36,11 @@ namespace TelegramBot.Services
         private const string ChooseGamePrivacyCommand = "/choosegameprivacy";
         private const string NewGameCommand = "/newgame";
         private const string SetGameTimeCommand = "/settime";
+        private const string GetGameCode = "/gamecode";
+        private const string ToFirstGameCommand = "/tofirst";
+        private const string PreviousGameCommand = "/previous";
+        private const string NextGameCommand = "/next";
+        private const string ToLastGameCommand = "/tolast";
         private const string FixGameCommand = "/fixgame";
         private const string DeleteGameCommand = "/deletegame";
         private const string AddGameCommand = "/addgame";
@@ -401,6 +406,49 @@ namespace TelegramBot.Services
                 return;
             }
 
+            if (e.CallbackQuery.Data.StartsWith(GetGameCode, StringComparison.OrdinalIgnoreCase))
+            {
+                Task.Run(async () =>
+                {
+                    await this.BotClient.SendTextMessageAsync(e.CallbackQuery.Message.Chat,
+                        "Команда для добавления игры в чат. Чтобы добавить игру в чат, скопируйте сообщение ниже и отправьте в целевой чат.");
+                    await this.BotClient.SendTextMessageAsync(e.CallbackQuery.Message.Chat, $"/{e.CallbackQuery.Data}");
+                });
+                return;
+            }
+
+            if (e.CallbackQuery.Data.StartsWith(MyGamesCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                Task.Run(() => this.SendGamesViewMenu(e.CallbackQuery.Message, player, 1));
+                return;
+            }
+
+            if (e.CallbackQuery.Data.StartsWith(ToFirstGameCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                Task.Run(() => this.SendGamesViewMenu(e.CallbackQuery.Message, player, 1));
+                return;
+            }
+
+            if (e.CallbackQuery.Data.StartsWith(PreviousGameCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                var gameNumber = int.Parse(e.CallbackQuery.Data.Replace(PreviousGameCommand, string.Empty).Trim());
+                Task.Run(() => this.SendGamesViewMenu(e.CallbackQuery.Message, player, gameNumber));
+                return;
+            }
+
+            if (e.CallbackQuery.Data.StartsWith(NextGameCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                var gameNumber = int.Parse(e.CallbackQuery.Data.Replace(NextGameCommand, string.Empty).Trim());
+                Task.Run(() => this.SendGamesViewMenu(e.CallbackQuery.Message, player, gameNumber));
+                return;
+            }
+
+            if (e.CallbackQuery.Data.StartsWith(ToLastGameCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                Task.Run(() => this.SendGamesViewMenu(e.CallbackQuery.Message, player, 0));
+                return;
+            }
+
             if (e.CallbackQuery.Data.StartsWith(FixGameCommand, StringComparison.OrdinalIgnoreCase))
             {
                 //Task.Run(() => this.FixGame(player, e.CallbackQuery.Message));
@@ -409,17 +457,11 @@ namespace TelegramBot.Services
             
             if (e.CallbackQuery.Data.StartsWith(DeleteGameCommand, StringComparison.OrdinalIgnoreCase))
             {
-                //Task.Run(() => this.DeleteGame(player, e.CallbackQuery.Message));
-                return;
-            }
-
-            if (e.CallbackQuery.Data.StartsWith(MyGamesCommand, StringComparison.OrdinalIgnoreCase))
-            {
-                Task.Run(() => this.MyGames(player, e.CallbackQuery.Message));
+                Task.Run(() => this.DeleteGame(player, e.CallbackQuery.Message));
                 return;
             }
         }
-
+        
         #region Callback Handlers
         /// <summary>
         /// Отправляет меню выбора вида спорта.
@@ -594,7 +636,7 @@ namespace TelegramBot.Services
             string addGameMessage = string.Format(GameInfo, game.Name, game.KindOfSport.GetElementDescription(), privacy, game.PlayersPerTeam, game.StartTime.ToString(DateTimeFormat)) + "\n" +
                                     $"{(game.FirstTeam != null && game.FirstTeam.Players.Any() ? $"Команда {firstTeamName}:\n{string.Join(", ", game.FirstTeam.Players.Select(player => $"@{player.Nickname}"))}\n" : $"Команда {firstTeamName}:\n")}" +
                                     $"{(game.SecondTeam != null && game.SecondTeam.Players.Any() ? $"Команда {secondTeamName}:\n{string.Join(", ", game.SecondTeam.Players.Select(player => $"@{player.Nickname}"))}" : $"Команда {secondTeamName}:\n")}";
-            List<InlineKeyboardButton> teamsKeyboardCallbackButtons = new List<InlineKeyboardButton>();
+            var teamsKeyboardCallbackButtons = new List<InlineKeyboardButton>();
             if (game.FirstTeam == null || game.FirstTeam?.Players?.Count != game.PlayersPerTeam)
             {
                 teamsKeyboardCallbackButtons.Add(new InlineKeyboardCallbackButton($"За {firstTeamName}", $"{JoinFirst} {game.Id}"));
@@ -640,7 +682,7 @@ namespace TelegramBot.Services
             var game = this._repository.Get(new Game(gameId)).FirstOrDefault();
             if (game == null)
             {
-                await this.BotClient.SendTextMessageAsync(message.Chat, "Игра не существует");
+                await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, "Игра не существует");
                 return;
             }
             if (!game.Creator.Equals(player))
@@ -650,29 +692,63 @@ namespace TelegramBot.Services
             }
 
             this._repository.Delete<Game>(game.Id);
-            await this.BotClient.SendTextMessageAsync(message.Chat, "Игра удалена");
+            await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, "Игра удалена");
         }
-
+        
         /// <summary>
-        /// Получает информацию о незавершённых играх для игрока.
+        /// Отправляет меню обзора доступных игр.
         /// </summary>
-        /// <param name="player">Игрок.</param>
         /// <param name="message">Сообщение.</param>
-        private async void MyGames(Player player, Message message)
+        /// <param name="player">Игрок.</param>
+        /// <param name="number">Текущий порядковый номер игры.</param>
+        private async void SendGamesViewMenu(Message message, Player player, int number)
         {
-            var games = this._repository.Get(new Game(player));
-            if (games == null || games.Count == 0)
+            var game = number == 0
+                ? this._repository.Get(new Game(player)).LastOrDefault()
+                : this._repository.Get(new Game(player), number, 1).FirstOrDefault();
+            if (game == null)
             {
                 await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, "У Вас нет незавершённых игр");
                 return;
             }
 
-            if (games.Count > 5)
+            var inlineNavigationKeyboard = new List<InlineKeyboardButton>();
+            switch (number)
             {
-                //ToDo: менюшку со скроллингом
+                case 0:
+                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<<", ToFirstGameCommand));
+                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<", $"{PreviousGameCommand} {number - 1}"));
+                    break;
+                case 1:
+                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">", $"{NextGameCommand} {number + 1}"));
+                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">>", ToLastGameCommand));
+                    break;
+                default:
+                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<<", ToFirstGameCommand));
+                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<", $"{PreviousGameCommand} {number - 1}"));
+                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">", $"{NextGameCommand} {number + 1}"));
+                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">>", ToLastGameCommand));
+                    break;
             }
 
-            await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, string.Join($"{Environment.NewLine}{Environment.NewLine}", games.Select(game => string.Format(GameInfo, game.Name, game.KindOfSport.GetElementDescription(), game.StartTime.ToString(DateTimeFormat), game.Id))));
+            var gameInfoMessage = $"{number}.{Environment.NewLine}{string.Format(GameInfo, game.Name, game.KindOfSport.GetElementDescription(), game.StartTime.ToString(DateTimeFormat), game.Id)}";
+            IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[]
+            {
+                new InlineKeyboardButton[]
+                {
+                    new InlineKeyboardCallbackButton("Получить код", $"{GetGameCode} {game.Id}")
+                },
+                new InlineKeyboardButton[]
+                {
+                    new InlineKeyboardCallbackButton("Редактировать", $"{FixGameCommand} {game.Id}")
+                },
+                new InlineKeyboardButton[]
+                {
+                    new InlineKeyboardCallbackButton("Удалить", $"{DeleteGameCommand} {game.Id}")
+                },
+                inlineNavigationKeyboard.ToArray()
+            });
+            await this.BotClient.EditMessageTextAsync(message.Chat, message.MessageId, gameInfoMessage, replyMarkup: inlineMarkup);
         }
         #endregion
     }
