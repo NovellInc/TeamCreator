@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using MongoDB.Bson;
 
 namespace DataModels.Interfaces
@@ -17,6 +19,16 @@ namespace DataModels.Interfaces
         /// <param name="items">Количество элементов на странице.</param>
         /// <returns></returns>
         List<TModel> Get<TModel>(TModel model, int page = 1, int items = 0);
+
+        /// <summary>
+        /// Получает данные согласно фильтру.
+        /// </summary>
+        /// <typeparam name="TModel">Тип модели.</typeparam>
+        /// <param name="filter">Фильтр, представленный лямбда выражением.</param>
+        /// <param name="page">Номер страницы из выборки элементов.</param>
+        /// <param name="items">Количество элементов на странице.</param>
+        /// <returns></returns>
+        List<TModel> Get<TModel>(Expression<Func<TModel, bool>> filter, int page = 1, int items = 0);
 
         /// <summary>
         /// Добавляет элемент в хранилище.

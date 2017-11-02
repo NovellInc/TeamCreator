@@ -11,12 +11,12 @@ namespace DataModels.Enums
         /// Футбол.
         /// </summary>
         [Description("Футбол")]
-        Football,
+        Football = 1,
 
         /// <summary>
         /// Футзал.
         /// </summary>
         [Description("Футзал")]
-        Futsal
+        Futsal = 2
     }
 }

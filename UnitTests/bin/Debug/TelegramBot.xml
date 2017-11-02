@@ -1,0 +1,504 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>TelegramBot</name>
+    </assembly>
+    <members>
+        <member name="T:TelegramBot.BotCommands">
+            <summary>
+            Команды бота.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.StartCommand">
+            <summary>
+            Команда начала работы с ботом.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.MenuCommand">
+            <summary>
+            Команда вызова главное меню.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.FaqCommand">
+            <summary>
+            Команда вызова справки.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.FinishCommand">
+            <summary>
+            Команда завершения процесса ввода настроек.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.BackCommand">
+            <summary>
+            Команда "назад".
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.SignInCommand">
+            <summary>
+            Команда на регистрацию.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.TimeZoneCommand">
+            <summary>
+            Команда на получение меню выбора часового пояса.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.ChooseKindOfSportCommand">
+            <summary>
+            Команда на получение меню выбора вида спорта.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.ChooseGamePrivacyCommand">
+            <summary>
+            Команда на получение меню выбора приватности игры.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.NewGameCommand">
+            <summary>
+            Запрос на создание новой игры.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.SetGameTimeCommand">
+            <summary>
+            Команда на установку времени игры.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.GetGameCodeCommand">
+            <summary>
+            Запрос на получение команды для добавления игры в чат.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.ToFirstGameCommand">
+            <summary>
+            Команда на получение меню первой команды списка.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.PreviousGameCommand">
+            <summary>
+            Команда на получение меню предыдущей команды списка.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.NextGameCommand">
+            <summary>
+            Команда на получение меню следующей команды списка.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.ToLastGameCommand">
+            <summary>
+            Команда на получение меню последней команды списка.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.FixGameCommand">
+            <summary>
+            Команда на получение меню редактирования игры.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.DeleteGameCommand">
+            <summary>
+            Команда на удаление игры.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.AddGameCommand">
+            <summary>
+            Команда на добавление игры в чат.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.MyGamesCommand">
+            <summary>
+            Команда на получение списка созданных игр.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.JoinFirstCommand">
+            <summary>
+            Команда на присоединение к первой команде в контексте игры.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.JoinSecondCommand">
+            <summary>
+            Команда на присоединение ко второй команде в контексте игры.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.BotCommands.DeclineCommand">
+            <summary>
+            Команда для отказа участвовать в игре.
+            </summary>
+        </member>
+        <member name="T:TelegramBot.Extensions.StringExtensions">
+            <summary>
+            Класс расширений для строк.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Extensions.StringExtensions.ExtractCommandParams``1(System.String,System.String,``0@)">
+            <summary>
+            Пытается извлечь параметры команды.
+            </summary>
+            <typeparam name="TModel">Тип модели параметров.</typeparam>
+            <param name="rawData">Сырые данные.</param>
+            <param name="command">Команда.</param>
+            <param name="model">Объект модели параметров.</param>
+            <returns>true, если параметры .</returns>
+        </member>
+        <member name="M:TelegramBot.Extensions.StringExtensions.ToJson``1(``0)">
+            <summary>
+            Сериализует объект в JSON. Все члены объекта равные null или значению по умолчанию игнорируются.
+            </summary>
+            <typeparam name="TModel">Тип объекта.</typeparam>
+            <param name="model">Объект.</param>
+            <returns>Возвращает сериализованную строку.</returns>
+        </member>
+        <member name="M:TelegramBot.Extensions.StringExtensions.FromJson``1(System.String)">
+            <summary>
+            Десериализует строку JSON в объект.
+            </summary>
+            <typeparam name="TModel">Тип объекта.</typeparam>
+            <param name="model">Объект.</param>
+            <returns>Возвращает десериализованный объект.</returns>
+        </member>
+        <member name="T:TelegramBot.Models.GameParams">
+            <summary>
+            Класс описывает параметры игры.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.GameParams.Id">
+            <summary>
+            Идентификатор в MongoDB.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.GameParams.Creator">
+            <summary>
+            Получает или задает создателя игры.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.GameParams.KindOfSport">
+            <summary>
+            Получает или задает вид спорта игры.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.GameParams.Name">
+            <summary>
+            Получает или задает название игры.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.GameParams.IsPublic">
+            <summary>
+            Получает или задает признак общедоступности игры.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.GameParams.ChatId">
+            <summary>
+            Идентификатор чата (для частных игр).
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.GameParams.StartTime">
+            <summary>
+            Получает или задает начало игры.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Models.GameParams.PlayersPerTeam">
+            <summary>
+            Получает или задает максимальное количество игроков в команде.
+            </summary>
+        </member>
+        <member name="T:TelegramBot.Resources.MessageStrings">
+            <summary>
+              Класс ресурса со строгой типизацией для поиска локализованных строк и т.д.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Resources.MessageStrings.ResourceManager">
+            <summary>
+              Возвращает кэшированный экземпляр ResourceManager, использованный этим классом.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Resources.MessageStrings.Culture">
+            <summary>
+              Перезаписывает свойство CurrentUICulture текущего потока для всех
+              обращений к ресурсу с помощью этого класса ресурса со строгой типизацией.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Resources.MessageStrings.SignIn">
+            <summary>
+              Ищет локализованную строку, похожую на Sign in.
+            </summary>
+        </member>
+        <member name="T:TelegramBot.Resources.TimeZone">
+            <summary>
+            Часовые пояса.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Resources.TimeZone.Калининград">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Resources.TimeZone.Москва">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Resources.TimeZone.Екатеринбург">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:TelegramBot.NinjectModules.CommonModule">
+            <summary>
+            Класс определяет привязки в приложении.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.NinjectModules.CommonModule.Log">
+            <summary>
+            Журнал событий.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.NinjectModules.CommonModule.Load">
+            <summary>
+            Загружает информацию в ядро.
+            </summary>
+        </member>
+        <member name="T:TelegramBot.Program">
+            <summary>
+            Класс программы.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Program.ServiceDescription">
+            <summary>
+            Описание сервиса.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Program.ServiceName">
+            <summary>
+            Наименование сервиса.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Program.ProgramLogger">
+            <summary>
+            Журнал событий.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Program.#cctor">
+            <summary>
+            Инициализирует статичные поля класса.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Program.Main(System.String[])">
+            <summary>
+            Входная точка программы.
+            </summary>
+            <param name="args">Аргументы командной строки.</param>
+        </member>
+        <member name="M:TelegramBot.Program.UnhandledExceptionHandler(System.Object,System.UnhandledExceptionEventArgs)">
+            <summary>
+            Обрабатывает событие необработанного исключения.
+            </summary>
+            <param name="sender">Инициатор события.</param>
+            <param name="e">Аргументы связанные с событием.</param>
+        </member>
+        <member name="T:TelegramBot.Services.ITelegramBotService">
+            <summary>
+            Интерфейс службы телеграм бота.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Services.ITelegramBotService.BotClient">
+            <summary>
+            Получает клиента телеграм бота.
+            </summary>
+        </member>
+        <member name="T:TelegramBot.Services.TelegramBotService">
+            <summary>
+            Служба телеграм бота.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Services.TelegramBotService.DateTimeFormat">
+            <summary>
+            Формат даты.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Services.TelegramBotService.Log">
+            <summary>
+            Журнал событий.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Services.TelegramBotService.ResourceManager">
+            <summary>
+            Менеджер ресурсов.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Services.TelegramBotService.KindOfSports">
+            <summary>
+            Словарь видов спорта.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Services.TelegramBotService.TimeZone">
+            <summary>
+            Словарь часовых поясов.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Services.TelegramBotService._repository">
+            <summary>
+            Хранилище.
+            </summary>
+        </member>
+        <member name="F:TelegramBot.Services.TelegramBotService._userGameConfigureSession">
+            <summary>
+            Сессии игроков занятых настройкой игр.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.#ctor(System.String,DataModels.Interfaces.IRepository)">
+            <summary>
+            Инициализирует новый экземпляр класса <see cref="T:TelegramBot.Services.TelegramBotService"/>.
+            </summary>
+            <param name="token">Токен бота.</param>
+            <param name="repository">Хранилище.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.Start">
+            <summary>
+            Запускает бота.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.Stop">
+            <summary>
+            Останавливает бота.
+            </summary>
+        </member>
+        <member name="P:TelegramBot.Services.TelegramBotService.BotClient">
+            <summary>
+            Получает клиента телеграм бота.
+            </summary>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.OnMessage(System.Object,Telegram.Bot.Args.MessageEventArgs)">
+            <summary>
+            Обрабатывает событие получения сообщения.
+            </summary>
+            <param name="sender">Инициатор события.</param>
+            <param name="e">Параметры события.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.SignIn(DataModels.Models.Player,Telegram.Bot.Types.Message)">
+            <summary>
+            Выполняет регистрацию игрока в системе.
+            </summary>
+            <param name="player">Игрок.</param>
+            <param name="message">Сообщение.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.Menu(Telegram.Bot.Types.Chat,System.Int32)">
+            <summary>
+            Отправляет команды меню бота.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора (следует указать, если вызов происходит из команды обратного вызова).</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.ParseGameParams(Telegram.Bot.Types.Chat,System.Int32,System.String[])">
+            <summary>
+            Сообщение на параметры игры.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="userId">Идентификатор создателя.</param>
+            <param name="parameters">Массив параметров игры.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.AddGame(Telegram.Bot.Types.Chat,System.String)">
+            <summary>
+            Добавляет игру в чат.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="rawGameId">Идентификатор игры.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.Faq(Telegram.Bot.Types.Message)">
+            <summary>
+            Формирует сообщение с руководством по использованию бота.
+            </summary>
+            <param name="message">Сообщение.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.OnCallbackQuery(System.Object,Telegram.Bot.Args.CallbackQueryEventArgs)">
+            <summary>
+            Обрабатывает событие получения обратного вызова.
+            </summary>
+            <param name="sender">Инициатор события.</param>
+            <param name="e">Параметры события.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.SendChooseKindOfSportMenu(Telegram.Bot.Types.Chat,System.Int32)">
+            <summary>
+            Отправляет меню выбора вида спорта.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.SendChooseGamePrivacyMenu(Telegram.Bot.Types.Chat,System.Int32,TelegramBot.Models.GameParams)">
+            <summary>
+            Отправляет меню выбора приватности игры.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора.</param>
+            <param name="gameParams">Параметры игры.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.CreateGame(Telegram.Bot.Types.Chat,System.Int32,TelegramBot.Models.GameParams)">
+            <summary>
+            Создаёт новую игру и сохраняет её в MongoDB.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора.</param>
+            <param name="gameParams">Параметры игры.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.JoinGame(Telegram.Bot.Types.Chat,System.Int32,DataModels.Models.Player,System.String,System.String)">
+            <summary>
+            Производит присоедиенение к игре.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора.</param>
+            <param name="player">Игрок.</param>
+            <param name="joinTo">Указывает к кому присоединиться.</param>
+            <param name="rawGameId">Идентификатор игры.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.DeclineGame(Telegram.Bot.Types.Chat,System.Int32,DataModels.Models.Player,System.String)">
+            <summary>
+            Производит отказ игрока от игры.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора.</param>
+            <param name="player">Игрок.</param>
+            <param name="rawGameId">Идентификатор игры.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.GetGameCode(Telegram.Bot.Types.Chat,System.Int32,System.String)">
+            <summary>
+            Получает команду для добавления игры в чат.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора.</param>
+            <param name="rawGameId">Идентификатор игры.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.FixGame(Telegram.Bot.Types.Chat,System.Int32,DataModels.Models.Player,System.String)">
+            <summary>
+            Изменяет параметры игры.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора.</param>
+            <param name="player">Игрок.</param>
+            <param name="rawGameId">Идентификатор игры в MongoDB.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.SendGameParamsMessage(Telegram.Bot.Types.Chat,System.Int32,DataModels.Models.Game)">
+            <summary>
+            Добавляет или обновляет сообщение с параметрами игры в чате.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора (если равно нулю, то будет сгенерировано новое сообщение, иначе заменено указанное).</param>
+            <param name="game">Игра.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.DeleteGame(Telegram.Bot.Types.Chat,System.Int32,DataModels.Models.Player,System.String)">
+            <summary>
+            Удаляет игру.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора.</param>
+            <param name="player">Игрок.</param>
+            <param name="rawGameId">Идентификатор игры.</param>
+        </member>
+        <member name="M:TelegramBot.Services.TelegramBotService.SendGamesViewMenu(Telegram.Bot.Types.Chat,System.Int32,DataModels.Models.Player,System.String)">
+            <summary>
+            Отправляет меню обзора доступных игр.
+            </summary>
+            <param name="chat">Чат.</param>
+            <param name="messageId">Идентификатор сообщения-инициатора.</param>
+            <param name="player">Игрок.</param>
+            <param name="number">Текущий порядковый номер игры.</param>
+        </member>
+    </members>
+</doc>

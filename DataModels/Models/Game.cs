@@ -66,6 +66,11 @@ namespace DataModels.Models
         public bool IsPublic { get; set; }
 
         /// <summary>
+        /// Идентификатор чата (для частных игр).
+        /// </summary>
+        public long ChatId { get; set; }
+
+        /// <summary>
         /// Получает или задает начало игры.
         /// </summary>
         public DateTime StartTime { get; set; }
@@ -84,5 +89,10 @@ namespace DataModels.Models
         /// Получает или задает вторую команду.
         /// </summary>
         public Team SecondTeam { get; set; }
+
+        /// <summary>
+        /// Спортивная площадка игры.
+        /// </summary>
+        public SportGround SportGround { get; set; }
     }
 }

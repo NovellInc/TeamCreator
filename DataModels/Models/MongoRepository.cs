@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using DataModels.Extensions;
 using DataModels.Interfaces;
 using MongoDB.Bson;
@@ -50,9 +52,35 @@ namespace DataModels.Models
             {
                 return this.GetCollection<TModel>().Find(model.ToMongoFilter()).ToList();
             }
-
+           
             return this.GetCollection<TModel>().Find(model.ToMongoFilter())
-                                               .Skip((page - 1) * items)
+                                               .Skip(page * items)
+                                               .Limit(items)
+                                               .ToList();
+        }
+
+        /// <summary>
+        /// Получает данные согласно фильтру.
+        /// </summary>
+        /// <typeparam name="TModel">Тип модели.</typeparam>
+        /// <param name="filter">Фильтр, представленный лямбда выражением.</param>
+        /// <param name="page">Номер страницы из выборки элементов.</param>
+        /// <param name="items">Количество элементов на странице.</param>
+        /// <returns></returns>
+        public List<TModel> Get<TModel>(Expression<Func<TModel, bool>> filter, int page = 1, int items = 0)
+        {
+            if (page < 1)
+            {
+                return null;
+            }
+
+            if (items == 0)
+            {
+                return this.GetCollection<TModel>().Find(filter).ToList();
+            }
+
+            return this.GetCollection<TModel>().Find(filter)
+                                               .Skip(page * items)
                                                .Limit(items)
                                                .ToList();
         }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using DataModels.Helpers;
 using DataModels.Interfaces;
 using MongoDB.Bson;
@@ -46,9 +45,9 @@ namespace DataModels.Models
         public ObjectId Id { get; set; }
 
         /// <summary>
-        /// Получает или задает часовой пояс, в котором находится игрок.
+        /// Получает или задает смещение от UTC часового пояса игрока.
         /// </summary>
-        public TimeZone TimeZone { get; set; }
+        public int TimeZone { get; set; }
 
         /// <summary>
         /// Получает или задает язык, выбранный пользователем для общения с ботом.

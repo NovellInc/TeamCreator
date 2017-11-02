@@ -58,6 +58,6 @@ namespace DataModels.Models
         /// <summary>
         /// Капитан команды.
         /// </summary>
-        public Player Captain { get; set; }
+        public User Captain { get; set; }
     }
 }
