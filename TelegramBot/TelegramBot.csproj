@@ -110,6 +110,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BotCommands.cs" />
+    <Compile Include="Exceptions\CommandProcessingException.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Models\GameParams.cs" />
     <Compile Include="Resources\MessageStrings.Designer.cs">
