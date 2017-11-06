@@ -141,7 +141,7 @@ namespace TelegramBot.Services
                     {
                         if (player == null)
                         {
-                            Task.Run(() => this.SignIn(e.Message));
+                            Task.Run(() => this.SendSignIn(e.Message));
                             return;
                         }
 
@@ -168,13 +168,13 @@ namespace TelegramBot.Services
                     {
                         this._userGameConfigureSession.Remove(e.Message.From.Id);
                     }
-                    Task.Run(() => this.Menu(e.Message.Chat));
+                    Task.Run(() => this.SendMenu(e.Message.Chat));
                     return;
                 }
 
                 if (e.Message.Text.StartsWith(FaqCommand, StringComparison.OrdinalIgnoreCase))
                 {
-                    Task.Run(() => this.Faq(e.Message));
+                    Task.Run(() => this.SendFaq(e.Message));
                     return;
                 }
             
@@ -196,7 +196,7 @@ namespace TelegramBot.Services
         /// Выполняет регистрацию игрока в системе.
         /// </summary>
         /// <param name="message">Сообщение.</param>
-        private async void SignIn(Message message)
+        private async void SendSignIn(Message message)
         {
             string replyMessage = "Для начала пользования ботом необходимо зарегистрироваться";
             IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(new InlineKeyboardButton[]
@@ -211,7 +211,7 @@ namespace TelegramBot.Services
         /// </summary>
         /// <param name="chat">Чат.</param>
         /// <param name="messageId">Идентификатор сообщения-инициатора (следует указать, если вызов происходит из команды обратного вызова).</param>
-        private async void Menu(Chat chat, int messageId = 0)
+        private async void SendMenu(Chat chat, int messageId = 0)
         {
             string replyMessage = "Выберите действие:";
             IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(new InlineKeyboardButton[]
@@ -230,7 +230,7 @@ namespace TelegramBot.Services
         }
 
         /// <summary>
-        /// Сообщение на параметры игры.
+        /// Сообщение с параметрами игры.
         /// </summary>
         /// <param name="chat">Чат.</param>
         /// <param name="userId">Идентификатор создателя.</param>
@@ -317,7 +317,7 @@ namespace TelegramBot.Services
         /// Формирует сообщение с руководством по использованию бота.
         /// </summary>
         /// <param name="message">Сообщение.</param>
-        private void Faq(Message message)
+        private void SendFaq(Message message)
         {
             // ToDo
         }
@@ -357,15 +357,7 @@ namespace TelegramBot.Services
 
             if (e.CallbackQuery.Data.ExtractCommandParams(TimeZoneCommand, out callbackParams))
             {
-                int timeZone;
-                if (!int.TryParse(callbackParams, out timeZone))
-                {
-                    return;
-                }
-
-                player.TimeZone = timeZone;
-                this._repository.Update(player);
-                this.BotClient.EditMessageTextAsync(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, $"{e.CallbackQuery.From.Username}, Ваш часовой пояс сохранён");
+                Task.Run(() => this.SetTimeZone(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams));
                 return;
             }
 
@@ -392,7 +384,7 @@ namespace TelegramBot.Services
                 {
                     this._userGameConfigureSession.Remove(player.TelegramId);
                 }
-                Task.Run(() => this.Menu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId));
+                Task.Run(() => this.SendMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId));
                 return;
             }
 
@@ -421,7 +413,7 @@ namespace TelegramBot.Services
                     this._userGameConfigureSession.Add(player.TelegramId, ObjectId.Empty);
                 }
                 gameParams.Player = player;
-                Task.Run(() => this.CreateGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, gameParams));
+                Task.Run(() => this.SetGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, gameParams));
                 return;
             }
 
@@ -450,7 +442,7 @@ namespace TelegramBot.Services
 
             if (e.CallbackQuery.Data.ExtractCommandParams(GetGameCodeCommand, out gameParams))
             {
-                Task.Run(() => this.GetGameCode(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, gameParams.Id));
+                Task.Run(() => this.GetGameCode(e.CallbackQuery.Message.Chat, gameParams.Id));
                 return;
             }
 
@@ -499,6 +491,25 @@ namespace TelegramBot.Services
         }
 
         #region Callback Handlers
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chat"></param>
+        /// <param name="messageId"></param>
+        /// <param name="player"></param>
+        /// <param name="callbackParams"></param>
+        private void SetTimeZone(Chat chat, int messageId, Player player, string callbackParams)
+        {
+            int timeZone;
+            if (!int.TryParse(callbackParams, out timeZone))
+            {
+                return;
+            }
+
+            player.TimeZone = timeZone;
+            this._repository.Update(player);
+            this.BotClient.EditMessageTextAsync(chat, messageId, $"{player.}, Ваш часовой пояс сохранён");
+        }
 
         /// <summary>
         /// Отправляет меню выбора вида спорта.
@@ -536,9 +547,7 @@ namespace TelegramBot.Services
         {
             if (gameParams == null)
             {
-                await this.BotClient.EditMessageTextAsync(chat, messageId, "");
-                Log.Error("Отсутствуют данные о виде спорта");
-                return;
+                throw new CommandProcessingException("Отсутствуют данные о виде спорта");
             }
 
             string replyMessage = "Выберите уровень приватности игры:";
@@ -558,12 +567,12 @@ namespace TelegramBot.Services
         }
 
         /// <summary>
-        /// Создаёт новую игру и сохраняет её в MongoDB.
+        /// Задает параметры Игре и сохраняет её в MongoDB.
         /// </summary>
         /// <param name="chat">Чат.</param>
         /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
         /// <param name="gameParams">Параметры игры.</param>
-        private async void CreateGame(Chat chat, int messageId, GameParams gameParams)
+        private async void SetGame(Chat chat, int messageId, GameParams gameParams)
         {
             ObjectId gameId;
             if (gameParams.Id.IsDefault())
@@ -581,9 +590,7 @@ namespace TelegramBot.Services
                 var game = this._repository.Get(new Game(gameParams.Id)).FirstOrDefault();
                 if (game == null)
                 {
-                    string exceptionMessage = "Игра не существует";
-                    await this.BotClient.EditMessageTextAsync(chat, messageId, exceptionMessage);
-                    throw new CommandProcessingException(exceptionMessage);
+                    throw new CommandProcessingException("Игра не существует");
                 }
                 this._repository.Update(game.ApplyGameParams(gameParams));
                 gameId = game.Id;
@@ -611,21 +618,17 @@ namespace TelegramBot.Services
         /// <param name="joinTo">Указывает к кому присоединиться.</param>
         /// <param name="gameParams">Параметры игры.</param>
         /// <exception cref="CommandProcessingException"></exception>
-        private async void JoinGame(Chat chat, int messageId, string joinTo, GameParams gameParams)
+        private void JoinGame(Chat chat, int messageId, string joinTo, GameParams gameParams)
         {
             if (gameParams == null || gameParams.Id.IsDefault())
             {
-                string exceptionMessage = "Некорректные данные";
-                await this.BotClient.EditMessageTextAsync(chat, messageId, exceptionMessage);
-                throw new CommandProcessingException(exceptionMessage);
+                throw new CommandProcessingException("Некорректные данные");
             }
             
             var game = this._repository.Get(new Game(gameParams.Id)).FirstOrDefault();
             if (game == null)
             {
-                string exceptionMessage = "Игра не существует";
-                await this.BotClient.EditMessageTextAsync(chat, messageId, exceptionMessage);
-                throw new CommandProcessingException(exceptionMessage);
+                throw new CommandProcessingException("Игра не существует");
             }
 
             if (game.FirstTeam == null)
@@ -664,21 +667,17 @@ namespace TelegramBot.Services
         /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
         /// <param name="gameParams">Параметры игры.</param>
         /// <exception cref="CommandProcessingException"></exception>
-        private async void DeclineGame(Chat chat, int messageId, GameParams gameParams)
+        private void DeclineGame(Chat chat, int messageId, GameParams gameParams)
         {
             if (gameParams == null || gameParams.Id.IsDefault())
             {
-                string exceptionMessage = "Некорректные данные";
-                await this.BotClient.EditMessageTextAsync(chat, messageId, exceptionMessage);
-                throw new CommandProcessingException(exceptionMessage);
+                throw new CommandProcessingException("Некорректные данные");
             }
            
             var game = this._repository.Get(new Game(gameParams.Id)).FirstOrDefault();
             if (game == null)
             {
-                string exceptionMessage = "Игра не существует";
-                await this.BotClient.EditMessageTextAsync(chat, messageId, exceptionMessage);
-                throw new CommandProcessingException(exceptionMessage);
+                throw new CommandProcessingException("Игра не существует");
             }
 
             if ((game.FirstTeam?.Players?.Remove(gameParams.Player) ?? false) ||
@@ -694,16 +693,13 @@ namespace TelegramBot.Services
         /// Получает команду для добавления игры в чат.
         /// </summary>
         /// <param name="chat">Чат.</param>
-        /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
         /// <param name="objectId">Идентификатор игры.</param>
         /// <exception cref="CommandProcessingException"></exception>
-        private async void GetGameCode(Chat chat, int messageId, ObjectId objectId)
+        private async void GetGameCode(Chat chat, ObjectId objectId)
         {
             if (objectId.IsDefault())
             {
-                string exceptionMessage = "Некорректные данные";
-                await this.BotClient.EditMessageTextAsync(chat, messageId, exceptionMessage);
-                throw new CommandProcessingException(exceptionMessage);
+                throw new CommandProcessingException("Некорректные данные");
             }
             await this.BotClient.SendTextMessageAsync(chat,
                 "Команда для добавления игры в чат. Чтобы добавить игру в чат, скопируйте сообщение ниже и отправьте в целевой чат.");
@@ -794,6 +790,7 @@ namespace TelegramBot.Services
         /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
         /// <param name="playerTelegramId">Игрок.</param>
         /// <param name="rawGameId">Идентификатор игры.</param>
+        /// <exception cref="CommandProcessingException"></exception>
         private async void DeleteGame(Chat chat, int messageId, int playerTelegramId, string rawGameId)
         {
             ObjectId gameId;
