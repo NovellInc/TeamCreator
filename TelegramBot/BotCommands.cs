@@ -11,7 +11,7 @@
         public const string StartCommand = "/start";
 
         /// <summary>
-        /// Команда вызова главное меню.
+        /// Команда вызова главного меню.
         /// </summary>
         public const string MenuCommand = "/menu";
 
@@ -39,6 +39,11 @@
         /// Команда на получение меню выбора часового пояса.
         /// </summary>
         public const string TimeZoneCommand = "/timezone";
+
+        /// <summary>
+        /// Команда на установку часового пояса.
+        /// </summary>
+        public const string SetTimeZoneCommand = "/settimezone";
 
         /// <summary>
         /// Команда на получение меню выбора вида спорта.

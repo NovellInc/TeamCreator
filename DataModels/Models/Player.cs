@@ -69,6 +69,17 @@ namespace DataModels.Models
             return Id.Equals(other.Id);
         }
 
+        /// <summary>
+        /// Возвращает отображаемое имя игрока.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return !string.IsNullOrEmpty(this.Nickname)
+                ? this.Nickname
+                : $"{this.Name} {this.Surname}".Trim();
+        }
+
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;

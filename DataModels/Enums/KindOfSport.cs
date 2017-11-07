@@ -8,6 +8,12 @@ namespace DataModels.Enums
     public enum KindOfSport
     {
         /// <summary>
+        /// Не указан.
+        /// </summary>
+        [Description("Не указан")]
+        Default = 0,
+
+        /// <summary>
         /// Футбол.
         /// </summary>
         [Description("Футбол")]

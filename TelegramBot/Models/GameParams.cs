@@ -44,10 +44,6 @@ namespace TelegramBot.Models
             {
                 IsPublic = gameParams.IsPublic;
             }
-            if (!gameParams.ChatId.IsDefault())
-            {
-                ChatId = gameParams.ChatId;
-            }
             if (!gameParams.StartTime.IsDefault())
             {
                 StartTime = gameParams.StartTime;

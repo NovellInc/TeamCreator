@@ -17,7 +17,7 @@ namespace TelegramBot.Resources
         /// 
         /// </summary>
         [Description("+3 Москва")]
-        Москва,
+        Москва = 3,
 
         /// <summary>
         /// 

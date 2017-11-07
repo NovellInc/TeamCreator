@@ -12,7 +12,7 @@ namespace TelegramBot.NinjectModules
     /// <summary>
     /// Класс определяет привязки в приложении.
     /// </summary>
-    public class CommonModule : NinjectModule
+    public sealed class CommonModule : NinjectModule
     {
         /// <summary>
         /// Журнал событий.
