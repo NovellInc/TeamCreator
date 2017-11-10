@@ -18,6 +18,6 @@
         /// <summary>
         /// Команда вызова справки.
         /// </summary>
-        public const string FaqCommand = "/faq";
+        public const string GuideCommand = "/guide";
     }
 }
