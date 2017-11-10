@@ -19,7 +19,7 @@ namespace DataModels.Models
         public Team(string name)
         {
             this.Name = name;
-            this.Players = new HashSet<Player>();
+            this.PlayerIds = new HashSet<ObjectId>();
         }
 
         /// <summary>
@@ -51,13 +51,15 @@ namespace DataModels.Models
         public string Name { get; set; }
 
         /// <summary>
-        /// Получает или задает игроков команды.
+        /// Получает или задает идентификаторы игроков команды.
         /// </summary>
-        public HashSet<Player> Players { get; set; }
+        [JsonConverter(typeof(BsonObjectIdConverter))]
+        public HashSet<ObjectId> PlayerIds { get; set; }
 
         /// <summary>
-        /// Капитан команды.
+        /// Идентификатор капитана команды.
         /// </summary>
-        public User Captain { get; set; }
+        [JsonConverter(typeof(BsonObjectIdConverter))]
+        public ObjectId CaptainId { get; set; }
     }
 }

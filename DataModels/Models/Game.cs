@@ -16,26 +16,54 @@ namespace DataModels.Models
         /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="Game"/>.
         /// </summary>
-        /// <param name="creator">Создатель игры.</param>
-        public Game(Player creator)
-        {
-            Creator = creator;
-        }
-
-        /// <summary>
-        /// Инициализирует новый экземпляр класса <see cref="Game"/>.
-        /// </summary>
-        /// <param name="id">Идентификатор в MongoDB.</param>
-        public Game(ObjectId id)
-        {
-            this.Id = id;
-        }
-
-        /// <summary>
-        /// Инициализирует новый экземпляр класса <see cref="Game"/>.
-        /// </summary>
         internal Game()
         {
+        }
+
+        /// <summary>
+        /// Инициализирует новый экземпляр класса <see cref="Game"/>.
+        /// </summary>
+        /// <param name="creatorId">Создатель игры.</param>
+        public Game(ObjectId creatorId)
+        {
+            CreatorId = creatorId;
+        }
+
+        /// <summary>
+        /// Инициализирует новый экземпляр класса <see cref="Game"/>.
+        /// </summary>
+        /// <param name="id">Идентификатор Игры.</param>
+        /// <param name="name">Название Игры.</param>
+        /// <param name="startTime">Время начала Игры.</param>
+        /// <param name="playersPerTeam">Количество игроков в командах.</param>
+        public Game(ObjectId id, string name, DateTime startTime, int playersPerTeam)
+        {
+            Id = id;
+            Name = name;
+            StartTime = startTime;
+            PlayersPerTeam = playersPerTeam;
+        }
+
+        /// <summary>
+        /// Инициализирует новый экземпляр класса <see cref="Game"/>.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="kindOfSport"></param>
+        public Game(ObjectId id, KindOfSport kindOfSport)
+        {
+            Id = id;
+            KindOfSport = kindOfSport;
+        }
+
+        /// <summary>
+        /// Инициализирует новый экземпляр класса <see cref="Game"/>.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="isPublic"></param>
+        public Game(ObjectId id, bool isPublic)
+        {
+            Id = id;
+            IsPublic = isPublic;
         }
 
         /// <summary>
@@ -46,9 +74,10 @@ namespace DataModels.Models
         public ObjectId Id { get; set; }
 
         /// <summary>
-        /// Получает или задает создателя игры.
+        /// Получает или задает идентификатор создателя игры.
         /// </summary>
-        public Player Creator { get; set; }
+        [JsonConverter(typeof(BsonObjectIdConverter))]
+        public ObjectId CreatorId { get; set; }
 
         /// <summary>
         /// Получает или задает вид спорта игры.

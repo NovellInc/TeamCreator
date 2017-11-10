@@ -1,128 +1,108 @@
-﻿namespace TelegramBot
+﻿namespace TelegramBot.Models
 {
     /// <summary>
-    /// Команды бота.
+    /// Команды обратного вызова бота.
     /// </summary>
-    public static class BotCommands
+    public enum CallbackBotCommands
     {
         /// <summary>
-        /// Команда начала работы с ботом.
+        /// Неизвестная команда.
         /// </summary>
-        public const string StartCommand = "/start";
-
-        /// <summary>
-        /// Команда вызова главного меню.
-        /// </summary>
-        public const string MenuCommand = "/menu";
-
-        /// <summary>
-        /// Команда вызова справки.
-        /// </summary>
-        public const string FaqCommand = "/faq";
-
-        /// <summary>
-        /// Команда завершения процесса ввода настроек.
-        /// </summary>
-        public const string FinishCommand = "/finish";
-
-        /// <summary>
-        /// Команда "назад".
-        /// </summary>
-        public const string BackCommand = "/back";
+        UnknownCommand = 0, 
 
         /// <summary>
         /// Команда на регистрацию.
         /// </summary>
-        public const string SignInCommand = "/signin";
+        SignInCommand = 1,
+
+        /// <summary>
+        /// Команда вернуться в главное меню.
+        /// </summary>
+        MainMenuCommand = 2,
+
+        /// <summary>
+        /// Команда завершения процесса ввода настроек.
+        /// </summary>
+        FinishCommand = 3,
 
         /// <summary>
         /// Команда на получение меню выбора часового пояса.
         /// </summary>
-        public const string TimeZoneCommand = "/timezone";
+        TimeZoneCommand = 4,
 
         /// <summary>
         /// Команда на установку часового пояса.
         /// </summary>
-        public const string SetTimeZoneCommand = "/settimezone";
+        SetTimeZoneCommand = 5,
 
         /// <summary>
         /// Команда на получение меню выбора вида спорта.
         /// </summary>
-        public const string ChooseKindOfSportCommand = "/choosesport";
+        ChooseKindOfSportCommand = 6,
 
         /// <summary>
         /// Команда на получение меню выбора приватности игры.
         /// </summary>
-        public const string ChooseGamePrivacyCommand = "/choosegameprivacy";
+        ChooseGamePrivacyCommand = 7,
 
         /// <summary>
         /// Запрос на создание новой игры.
         /// </summary>
-        public const string NewGameCommand = "/newgame";
-
-        /// <summary>
-        /// Команда на установку времени игры.
-        /// </summary>
-        public const string SetGameTimeCommand = "/settime";
-
+        NewGameCommand = 8,
+        
         /// <summary>
         /// Запрос на получение команды для добавления игры в чат.
         /// </summary>
-        public const string GetGameCodeCommand = "/gamecode";
+        GetGameCodeCommand = 9,
 
         /// <summary>
         /// Команда на получение меню первой команды списка.
         /// </summary>
-        public const string ToFirstGameCommand = "/tofirst";
+        ToFirstGameCommand = 10,
 
         /// <summary>
         /// Команда на получение меню предыдущей команды списка.
         /// </summary>
-        public const string PreviousGameCommand = "/previous";
+        PreviousGameCommand = 11,
 
         /// <summary>
         /// Команда на получение меню следующей команды списка.
         /// </summary>
-        public const string NextGameCommand = "/next";
+        NextGameCommand = 12,
 
         /// <summary>
         /// Команда на получение меню последней команды списка.
         /// </summary>
-        public const string ToLastGameCommand = "/tolast";
+        ToLastGameCommand = 13,
 
         /// <summary>
         /// Команда на получение меню редактирования игры.
         /// </summary>
-        public const string FixGameCommand = "/fixgame";
+        FixGameCommand = 14,
 
         /// <summary>
         /// Команда на удаление игры.
         /// </summary>
-        public const string DeleteGameCommand = "/deletegame";
-
-        /// <summary>
-        /// Команда на добавление игры в чат.
-        /// </summary>
-        public const string AddGameCommand = "/addgame";
-
+        DeleteGameCommand = 15,
+        
         /// <summary>
         /// Команда на получение списка созданных игр.
         /// </summary>
-        public const string MyGamesCommand = "/mygames";
+        MyGamesCommand = 16,
 
         /// <summary>
         /// Команда на присоединение к первой команде в контексте игры.
         /// </summary>
-        public const string JoinFirstCommand = "joinfirst";
+        JoinFirstCommand = 17,
 
         /// <summary>
         /// Команда на присоединение ко второй команде в контексте игры.
         /// </summary>
-        public const string JoinSecondCommand = "joinsecond";
+        JoinSecondCommand = 18,
 
         /// <summary>
         /// Команда для отказа участвовать в игре.
         /// </summary>
-        public const string DeclineCommand = "decline";
+        DeclineCommand = 19
     }
 }

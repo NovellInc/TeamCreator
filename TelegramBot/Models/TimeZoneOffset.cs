@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel;
 
-namespace TelegramBot.Resources
+namespace TelegramBot.Models
 {
     /// <summary>
     /// Часовые пояса.
     /// </summary>
-    public enum TimeZone
+    public enum TimeZoneOffset
     {
         /// <summary>
         /// 

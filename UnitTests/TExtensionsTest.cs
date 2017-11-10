@@ -2,9 +2,8 @@
 using DataModels.Extensions;
 using DataModels.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MongoDB.Bson;
 using MongoDB.Driver;
-using Newtonsoft.Json;
-using TelegramBot;
 using TelegramBot.Extensions;
 using TelegramBot.Models;
 
@@ -29,15 +28,12 @@ namespace UnitTests
         [TestMethod]
         public void ExtractCommandParamsTest()
         {
-            string json = new GameParams
-            {
-                KindOfSport = KindOfSport.Football,
-                IsPublic = true
-            }.ToJson();
-            string data = "string";
-            string commandParams = $"{BotCommands.AddGameCommand} {data.ToJson()}";
-            GameParams gameParams;
-            commandParams.ExtractCommandParams(BotCommands.AddGameCommand, out gameParams);
+            var game = new Game(ObjectId.Parse("5a041e8206a63808cc0ea74e"), true);
+            var mongoUrl = new MongoUrl("mongodb://localhost:27017/TeamCreator");
+            var filter = Builders<Game>.Filter.Eq("_id", game.Id);
+            var updateDefinition = Builders<Game>.Update;
+            var update = updateDefinition.Combine(updateDefinition.Set(nameof(game.Name), game.Name), updateDefinition.Set(nameof(game.IsPublic), game.IsPublic));
+            new MongoClient(mongoUrl).GetDatabase(mongoUrl.DatabaseName).GetCollection<Game>(typeof(Game).Name).UpdateOne(filter, update);
         }
     }
 }

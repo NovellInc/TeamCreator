@@ -109,10 +109,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BotCommands.cs" />
+    <Compile Include="Models\CallbackBotCommands.cs" />
+    <Compile Include="Models\MainBotCommands.cs" />
     <Compile Include="Exceptions\CommandProcessingException.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
-    <Compile Include="Models\GameParams.cs" />
     <Compile Include="Resources\MessageStrings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -121,7 +121,7 @@
     <Compile Include="NinjectModules\CommonModule.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Resources\TimeZone.cs" />
+    <Compile Include="Models\TimeZoneOffset.cs" />
     <Compile Include="Services\ITelegramBotService.cs" />
     <Compile Include="Services\TelegramBotService.cs" />
   </ItemGroup>

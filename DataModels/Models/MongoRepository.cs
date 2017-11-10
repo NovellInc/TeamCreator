@@ -34,6 +34,17 @@ namespace DataModels.Models
         }
 
         /// <summary>
+        /// Получает объект по идентификатору.
+        /// </summary>
+        /// <typeparam name="TModel">Тип объекта.</typeparam>
+        /// <param name="id">Идентификатор.</param>
+        /// <returns>Возвращает объект.</returns>
+        public TModel Get<TModel>(ObjectId id) where TModel : IMongoModel
+        {
+            return this.GetCollection<TModel>().Find(Builders<TModel>.Filter.Eq("_id", id)).FirstOrDefault();
+        }
+
+        /// <summary>
         /// Получает список объектов согласно фильтру.
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
@@ -54,7 +65,7 @@ namespace DataModels.Models
             }
            
             return this.GetCollection<TModel>().Find(model.ToMongoFilter())
-                                               .Skip(page * items)
+                                               .Skip((page - 1) * items)
                                                .Limit(items)
                                                .ToList();
         }
@@ -103,6 +114,21 @@ namespace DataModels.Models
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="model">Обновлённый элемент.</param>
         public void Update<TModel>(TModel model) where TModel : class, IMongoModel
+        {
+            var filter = Builders<TModel>.Filter.Eq(IdField, model.Id);
+            var update = model.ToMongoUpdateFilter();
+            if (update != null)
+            {
+                this.GetCollection<TModel>().UpdateOne(filter, update);
+            }
+        }
+
+        /// <summary>
+        /// Обновляет элемент в хранилище.
+        /// </summary>
+        /// <typeparam name="TModel">Тип модели.</typeparam>
+        /// <param name="model">Обновлённый элемент.</param>
+        public void Replace<TModel>(TModel model) where TModel : class, IMongoModel
         {
             var filter = Builders<TModel>.Filter.Eq(IdField, model.Id);
             this.GetCollection<TModel>().ReplaceOne(filter, model, new UpdateOptions { IsUpsert = true });

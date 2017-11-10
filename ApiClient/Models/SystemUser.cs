@@ -6,7 +6,7 @@ namespace ApiClient.Models
     /// <summary>
     /// Класс пользователь системы.
     /// </summary>
-    public sealed class SystemUser : User
+    public sealed class SystemUser : TelegramUser
     {
         /// <summary>
         /// Получает или задает идетификатор пользователя.

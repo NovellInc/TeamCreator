@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Resources;
 using System.Threading.Tasks;
 using DataModels.Enums;
 using DataModels.Extensions;
@@ -19,9 +18,9 @@ using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBot.Exceptions;
 using TelegramBot.Extensions;
 using TelegramBot.Models;
+using static TelegramBot.Models.MainBotCommands;
+using static TelegramBot.Models.CallbackBotCommands;
 using Game = DataModels.Models.Game;
-using TimeZone = TelegramBot.Resources.TimeZone;
-using static TelegramBot.BotCommands;
 
 namespace TelegramBot.Services
 {
@@ -31,17 +30,33 @@ namespace TelegramBot.Services
     public sealed class TelegramBotService : ITelegramBotService
     {
         public const string CommonError = "Ошибка выполнения команды";
-        public const string BadData = "Некорректные данные";
-        public const string BadGameId = "Некорректный идентификатор игры";
-        public const string GameNotExist = "Игра не существует";
-        public const string NotCreatorTryDelete = "Только создатель игры может удалить игру";
+        public const string BadDataError = "Некорректные данные";
+        public const string BadDataTryAgainError = "Некорректные данные. Попробуйте снова";
+        public const string BadGameIdError = "Некорректный идентификатор игры";
+        public const string GameNotExistError = "Игра не существует";
+        public const string NotCreatorTryDeleteError = "Только создатель игры может удалить игру";
+        public const string PrivateGameIsAlreadyAdded = "Игра является частной и уже добавлена в другом чате";
+        public const string OnlyChatAvailable = "Добавить игру можно только в чат";
+
+        /// <summary>
+        /// Разделитель команды и параметров в данных обратного вызова.
+        /// </summary>
+        private const char CommandAndParamsSplitter = ' ';
+        
+        /// <summary>
+        /// Разделитель параметров в данных обратного вызова.
+        /// </summary>
+        private const char ParamsSplitter = '|';
 
         /// <summary>
         /// Формат даты.
         /// </summary>
         private const string DateTimeFormat = @"H:mm d.MM.yyyy";
 
-        private static readonly string GameInfo = "Название: {0}\nВид спорта: {1}\nДоступность: {2}\nИгроков в команде: {3}\nВремя начала: {4}";
+        /// <summary>
+        /// Шаблон информации об игре.
+        /// </summary>
+        private const string GameInfoPattern = "Название: {0}\nВид спорта: {1}\nДоступность: {2}\nИгроков в команде: {3}\nВремя начала: {4}";
 
         /// <summary>
         /// Журнал событий.
@@ -61,7 +76,7 @@ namespace TelegramBot.Services
         /// <summary>
         /// Словарь часовых поясов.
         /// </summary>
-        private static readonly Dictionary<TimeZone, string> TimeZone;
+        private static readonly Dictionary<TimeZoneOffset, string> TimeZone;
 
         /// <summary>
         /// Хранилище.
@@ -77,8 +92,8 @@ namespace TelegramBot.Services
                     .Skip(1)
                     .ToDictionary(selector => selector.GetElementDescription().ToUpper(), selector => selector);
             TimeZone =
-                Enum.GetValues(typeof (TimeZone))
-                    .Cast<TimeZone>()
+                Enum.GetValues(typeof (TimeZoneOffset))
+                    .Cast<TimeZoneOffset>()
                     .ToDictionary(selector => selector, selector => selector.GetElementDescription());
         }
 
@@ -181,8 +196,7 @@ namespace TelegramBot.Services
 
                     await this.ParseGameParams(e.Message.Chat,
                         e.Message.From.Id,
-                        e.Message.Text.Replace(NewGameCommand, string.Empty)
-                            .Trim()
+                        e.Message.Text.Trim()
                             .Split(new[] {"\n", $"{Environment.NewLine}"}, StringSplitOptions.RemoveEmptyEntries));
                     return;
                 }
@@ -192,7 +206,7 @@ namespace TelegramBot.Services
             catch (CommandProcessingException commandProcessingException)
             {
                 await this.BotClient.SendTextMessageAsync(e.Message.Chat, commandProcessingException.Message);
-                Log.Warn(commandProcessingException);
+                //Log.Warn(commandProcessingException);
             }
             catch (Exception exception)
             {
@@ -211,7 +225,7 @@ namespace TelegramBot.Services
             string replyMessage = "Для начала пользования ботом необходимо зарегистрироваться";
             IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(new InlineKeyboardButton[]
             {
-                new InlineKeyboardCallbackButton("Зарегистрироваться", SignInCommand),
+                new InlineKeyboardCallbackButton("Зарегистрироваться", SignInCommand.ToString()),
             });
             await this.BotClient.SendTextMessageAsync(chat, replyMessage, replyMarkup: inlineReplyMarkup);
         }
@@ -228,12 +242,12 @@ namespace TelegramBot.Services
             {
                 new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton("Создать игру", ChooseKindOfSportCommand),
-                    new InlineKeyboardCallbackButton("Мои игры", MyGamesCommand)
+                    new InlineKeyboardCallbackButton("Создать игру", ChooseKindOfSportCommand.ToString()),
+                    new InlineKeyboardCallbackButton("Мои игры", MyGamesCommand.ToString())
                 },
                 new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton("Сменить часовой пояс", TimeZoneCommand)
+                    new InlineKeyboardCallbackButton("Сменить часовой пояс", TimeZoneCommand.ToString())
                 } 
             });
 
@@ -250,7 +264,7 @@ namespace TelegramBot.Services
         /// Сообщение с параметрами игры.
         /// </summary>
         /// <param name="chat">Чат.</param>
-        /// <param name="userId">Идентификатор создателя.</param>
+        /// <param name="userId">Идентификатор создателя в Telegram.</param>
         /// <param name="parameters">Массив параметров игры.</param>
         /// <exception cref="CommandProcessingException"></exception>
         private async Task ParseGameParams(Chat chat, int userId, string[] parameters)
@@ -260,26 +274,26 @@ namespace TelegramBot.Services
             {
                 if (!this._userGameConfigureSession.TryGetValue(userId, out gameId))
                 {
-                    return;
+                    throw new CommandProcessingException("Режим задания параметров игры не активирован. Для активации выберите игру для редактирования или создайте новую");
                 }
             }
             
             if (parameters.All(string.IsNullOrEmpty))
             {
-                throw new CommandProcessingException(BadData);
+                throw new CommandProcessingException(BadDataTryAgainError);
             }
 
             Game game;
             try
             {
-                game = this._repository.Get(new Game(gameId)).First();
-                game.Name = parameters[0];
-                game.PlayersPerTeam = int.Parse(parameters[1]);
-                game.StartTime = DateTime.ParseExact(parameters[2], DateTimeFormat, CultureInfo.InvariantCulture);
+                game = new Game(gameId,
+                                parameters[0],
+                                DateTime.ParseExact(parameters[2], DateTimeFormat, CultureInfo.InvariantCulture),
+                                int.Parse(parameters[1]));
             }
             catch (Exception exception)
             {
-                throw new CommandProcessingException(BadData, exception);
+                throw new CommandProcessingException(BadDataError, exception);
             }
 
             lock (this._userGameConfigureSession)
@@ -288,7 +302,7 @@ namespace TelegramBot.Services
             }
             this._repository.Update(game);
 
-            await this.BotClient.SendTextMessageAsync(chat, "Команда для добавления игры в чат. Чтобы добавить игру в чат, скопируйте сообщение ниже и отправьте в целевой чат.");
+            await this.BotClient.SendTextMessageAsync(chat, "Чтобы добавить игру в чат, скопируйте сообщение ниже и отправьте в целевой чат.");
             await this.BotClient.SendTextMessageAsync(chat, $"/{game.Id}");
         }
 
@@ -302,19 +316,19 @@ namespace TelegramBot.Services
         {
             if (chat.Type == ChatType.Private)
             {
-                throw new CommandProcessingException("Добавить игру можно только в чат");
+                throw new CommandProcessingException(OnlyChatAvailable);
             }
 
             ObjectId gameId;
             if (!ObjectId.TryParse(rawGameId, out gameId))
             {
-                throw new CommandProcessingException(BadGameId);
+                throw new CommandProcessingException(BadGameIdError);
             }
 
-            var game = this._repository.Get(new Game(gameId)).FirstOrDefault();
+            var game = this._repository.Get<Game>(gameId);
             if (game == null)
             {
-                throw new CommandProcessingException(GameNotExist);
+                throw new CommandProcessingException(GameNotExistError);
             }
 
             if (!game.IsPublic)
@@ -326,7 +340,7 @@ namespace TelegramBot.Services
                 }
                 else if (game.ChatId != chat.Id)
                 {
-                    throw new CommandProcessingException("Игра является частной и уже добавлена в другом чате");
+                    throw new CommandProcessingException(PrivateGameIsAlreadyAdded);
                 }
             }
 
@@ -353,10 +367,12 @@ namespace TelegramBot.Services
         {
             try
             {
+                string callbackParams;
+                var command = e.CallbackQuery.Data.SplitCommandAndParams(CommandAndParamsSplitter, out callbackParams);
                 var player = this._repository.Get(new Player(e.CallbackQuery.From.Id)).FirstOrDefault();
                 if (player == null)
                 {
-                    if (e.CallbackQuery.Data.StartsWith(SignInCommand, StringComparison.OrdinalIgnoreCase))
+                    if (command == SignInCommand)
                     {
                         this._repository.Add(new Player(e.CallbackQuery.From.Id)
                         {
@@ -374,143 +390,138 @@ namespace TelegramBot.Services
                     return;
                 }
 
-                if (e.CallbackQuery.Data.StartsWith(FinishCommand, StringComparison.OrdinalIgnoreCase))
+                switch (command)
                 {
-                    lock (this._userGameConfigureSession)
-                    {
-                        this._userGameConfigureSession.Remove(player.TelegramId);
-                    }
-                    try
-                    {
-                        await this.BotClient.DeleteMessageAsync(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId);
-                    }
-                    catch (Exception)
-                    {
-                        // No action
-                    }
-                    return;
-                }
-
-                if (e.CallbackQuery.Data.StartsWith(MenuCommand, StringComparison.OrdinalIgnoreCase))
-                {
-                    lock (this._userGameConfigureSession)
-                    {
-                        this._userGameConfigureSession.Remove(player.TelegramId);
-                    }
-                    await this.SendMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId);
-                    return;
-                }
-
-                if (e.CallbackQuery.Data.StartsWith(TimeZoneCommand, StringComparison.OrdinalIgnoreCase))
-                {
-                    await this.SendTimeZone(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, "Выберите Ваш часовой пояс:", true);
-                    return;
-                }
-
-                GameParams gameParams;
-                if (e.CallbackQuery.Data.ExtractCommandParams(ChooseKindOfSportCommand, out gameParams))
-                {
-                    await this.SendChooseKindOfSportMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, gameParams);
-                    return;
-                }
-
-                if (e.CallbackQuery.Data.ExtractCommandParams(ChooseGamePrivacyCommand, out gameParams))
-                {
-                    await this.SendChooseGamePrivacyMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, gameParams);
-                    return;
-                }
-
-                if (e.CallbackQuery.Data.ExtractCommandParams(NewGameCommand, out gameParams))
-                {
-                    if (this._userGameConfigureSession.Keys.Contains(player.TelegramId))
-                    {
+                    case MainMenuCommand:
+                        lock (this._userGameConfigureSession)
+                        {
+                            this._userGameConfigureSession.Remove(player.TelegramId);
+                        }
+                        await this.SendMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId);
                         return;
-                    }
 
-                    lock (this._userGameConfigureSession)
-                    {
-                        this._userGameConfigureSession.Add(player.TelegramId, ObjectId.Empty);
-                    }
-                    gameParams.Player = player;
-                    await this.SetGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, gameParams);
-                    return;
-                }
+                    case FinishCommand:
+                        lock (this._userGameConfigureSession)
+                        {
+                            this._userGameConfigureSession.Remove(player.TelegramId);
+                        }
+                        try
+                        {
+                            await this.BotClient.DeleteMessageAsync(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId);
+                        }
+                        catch (Exception)
+                        {
+                            // No action
+                        }
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(JoinFirstCommand, out gameParams))
-                {
-                    gameParams.Player = player;
-                    this.JoinGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, JoinFirstCommand, gameParams);
-                    return;
-                }
+                    case TimeZoneCommand:
+                        await this.SendTimeZone(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, "Выберите Ваш часовой пояс:", true);
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(JoinSecondCommand, out gameParams))
-                {
-                    gameParams.Player = player;
-                    this.JoinGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, JoinFirstCommand, gameParams);
-                    return;
-                }
+                    case ChooseKindOfSportCommand:
+                        if (this._userGameConfigureSession.Keys.Contains(player.TelegramId))
+                        {
+                            return;
+                        }
+                        lock (this._userGameConfigureSession)
+                        {
+                            if (!string.IsNullOrEmpty(callbackParams))
+                            {
+                                this._userGameConfigureSession[player.TelegramId] = ObjectId.Parse(callbackParams);
+                            }
+                            else
+                            {
+                                this._userGameConfigureSession[player.TelegramId] = this._repository.Add(new Game(player.Id));
+                            }
+                        }
+                        await this.SendChooseKindOfSportMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId);
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(DeclineCommand, out gameParams))
-                {
-                    gameParams.Player = player;
-                    this.DeclineGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, gameParams);
-                    return;
-                }
+                    case ChooseGamePrivacyCommand:
+                        if (!this._userGameConfigureSession.Keys.Contains(player.TelegramId))
+                        {
+                            return;
+                        }
+                        if (this._userGameConfigureSession[player.TelegramId].IsDefault())
+                        {
+                            throw new CommandProcessingException(BadGameIdError);
+                        }
+                        if (!string.IsNullOrEmpty(callbackParams))
+                        {
+                            this._repository.Update(new Game(this._userGameConfigureSession[player.TelegramId],
+                                                             (KindOfSport) Enum.Parse(typeof (KindOfSport), callbackParams)));
+                        }
+                        await this.SendChooseGamePrivacyMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId);
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(GetGameCodeCommand, out gameParams))
-                {
-                    await this.GetGameCode(e.CallbackQuery.Message.Chat, gameParams.Id);
-                    return;
-                }
+                    case NewGameCommand:
+                        if (!this._userGameConfigureSession.Keys.Contains(player.TelegramId))
+                        {
+                            return;
+                        }
+                        if (this._userGameConfigureSession[player.TelegramId].IsDefault())
+                        {
+                            throw new CommandProcessingException(BadGameIdError);
+                        }
+                        if (!string.IsNullOrEmpty(callbackParams))
+                        {
+                            var gameUpdate = bool.Parse(callbackParams)
+                                ? new Game(this._userGameConfigureSession[player.TelegramId], true)
+                                : new Game(this._userGameConfigureSession[player.TelegramId], false) {ChatId = 0};
+                            this._repository.Update(gameUpdate);
+                        }
+                        await this.StartWaitingGameParams(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId);
+                        return;
 
-                string callbackParams;
-                if (e.CallbackQuery.Data.ExtractCommandParams(SetTimeZoneCommand, out callbackParams))
-                {
-                    await this.SetTimeZone(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams);
-                    return;
-                }
+                    case JoinFirstCommand:
+                        this.JoinGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, JoinFirstCommand, ObjectId.Parse(callbackParams), player.Id);
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(MyGamesCommand, out callbackParams) ||
-                    e.CallbackQuery.Data.ExtractCommandParams(ToFirstGameCommand, out callbackParams))
-                {
-                    await this.SendGamesViewMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, "1");
-                    return;
-                }
+                    case JoinSecondCommand:
+                        this.JoinGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, JoinSecondCommand, ObjectId.Parse(callbackParams), player.Id);
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(PreviousGameCommand, out callbackParams))
-                {
-                    await this.SendGamesViewMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams);
-                    return;
-                }
+                    case DeclineCommand:
+                        this.DeclineGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, ObjectId.Parse(callbackParams), player.Id);
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(NextGameCommand, out callbackParams))
-                {
-                    await this.SendGamesViewMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams);
-                    return;
-                }
+                    case GetGameCodeCommand:
+                        await this.GetGameCode(e.CallbackQuery.Message.Chat, ObjectId.Parse(callbackParams));
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(ToLastGameCommand, out callbackParams))
-                {
-                    await this.SendGamesViewMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams);
-                    return;
-                }
+                    case FixGameCommand:
+                        lock (this._userGameConfigureSession)
+                        {
+                            this._userGameConfigureSession[player.TelegramId] = ObjectId.Parse(callbackParams);
+                        }
+                        await this.SendChooseKindOfSportMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId);
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(ToFirstGameCommand, out callbackParams))
-                {
-                    await this.SendGamesViewMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams);
-                    return;
-                }
+                    case SetTimeZoneCommand:
+                        await this.SetTimeZone(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams);
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(FixGameCommand, out callbackParams))
-                {
-                    await this.FixGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams);
-                    return;
-                }
+                    case MyGamesCommand:
+                    case ToFirstGameCommand:
+                        await this.SendGamesViewMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, "1");
+                        return;
 
-                if (e.CallbackQuery.Data.ExtractCommandParams(DeleteGameCommand, out callbackParams))
-                {
-                    await this.DeleteGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player.Id, callbackParams);
-                    return;
+                    case PreviousGameCommand:
+                    case NextGameCommand:
+                        await this.SendGamesViewMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams);
+                        return;
+
+                    case ToLastGameCommand:
+                        await this.SendGamesViewMenu(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, "0");
+                        return;
+
+                    case DeleteGameCommand:
+                        await this.DeleteGame(e.CallbackQuery.Message.Chat, e.CallbackQuery.Message.MessageId, player, callbackParams);
+                        return;
+
+                    default:
+                        throw new CommandProcessingException(BadDataError);
                 }
             }
             catch (CommandProcessingException commandProcessingException)
@@ -538,7 +549,7 @@ namespace TelegramBot.Services
             var timeZoneButtons =
                 TimeZone.Select(tz => new InlineKeyboardButton[]
                         {
-                            new InlineKeyboardCallbackButton(tz.Value, $"{SetTimeZoneCommand} {(int) tz.Key}")
+                            new InlineKeyboardCallbackButton(tz.Value, $"{SetTimeZoneCommand}{CommandAndParamsSplitter}{(int) tz.Key}")
                         })
                         .ToArray();
             var buttons = cancelButtonOn
@@ -546,7 +557,7 @@ namespace TelegramBot.Services
                                  {
                                      new InlineKeyboardButton[]
                                      {
-                                         new InlineKeyboardCallbackButton("Отмена", MenuCommand)
+                                         new InlineKeyboardCallbackButton("Отмена", MainMenuCommand.ToString())
                                      }
                                  })
                                  .ToArray()
@@ -567,13 +578,13 @@ namespace TelegramBot.Services
             int timeZone;
             if (!int.TryParse(timeZoneValue, out timeZone))
             {
-                throw new CommandProcessingException(BadData);
+                throw new CommandProcessingException(BadDataError);
             }
 
             player.TimeZone = timeZone;
             this._repository.Update(player);
             string timeZoneDescription;
-            TimeZone.TryGetValue((TimeZone) timeZone, out timeZoneDescription);
+            TimeZone.TryGetValue((TimeZoneOffset) timeZone, out timeZoneDescription);
             timeZoneDescription = !string.IsNullOrEmpty(timeZoneDescription) ? $" ({timeZoneDescription})" : string.Empty;
             await this.BotClient.EditMessageTextAsync(chat, messageId, $"{player}, Ваш часовой пояс{timeZoneDescription} сохранён");
         }
@@ -582,25 +593,25 @@ namespace TelegramBot.Services
         /// Отправляет меню выбора вида спорта.
         /// </summary>
         /// <param name="chat">Чат.</param>
-        /// <param name="messageId">Идентификатор сообщения-инициатора. Если равно 0, то меню будет отправлено новым сообщением.</param>
-        /// <param name="gameParams">Параметры игры.</param>
-        private async Task SendChooseKindOfSportMenu(Chat chat, int messageId, GameParams gameParams = null)
+        /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
+        private async Task SendChooseKindOfSportMenu(Chat chat, int messageId)
         {
             string replyMessage = "Выберите вид спорта:";
             IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(KindOfSports.Select(kind => new InlineKeyboardButton[]
                                                                                    {
                                                                                        new InlineKeyboardCallbackButton(kind.Value.GetElementDescription(),
-                                                                                            $"{ChooseGamePrivacyCommand} {new GameParams(gameParams) {KindOfSport = kind.Value}.ToJson()}")
+                                                                                            $"{ChooseGamePrivacyCommand}{CommandAndParamsSplitter}{(int)kind.Value}")
                                                                                    })
-                                                                                   .Concat(new[] { new InlineKeyboardButton[] { new InlineKeyboardCallbackButton("Отмена", MenuCommand)}})
+                                                                                   .Concat(new[]
+                                                                                   {
+                                                                                       new InlineKeyboardButton[]
+                                                                                       {
+                                                                                           new InlineKeyboardCallbackButton("Завершить", MainMenuCommand.ToString()),
+                                                                                           new InlineKeyboardCallbackButton("Далее", ChooseGamePrivacyCommand.ToString())
+                                                                                       }
+                                                                                   })
                                                                                    .ToArray()
                                                                       );
-            if (messageId == 0)
-            {
-                await this.BotClient.SendTextMessageAsync(chat, replyMessage, replyMarkup: inlineReplyMarkup);
-                return;
-            }
-
             await this.BotClient.EditMessageTextAsync(chat, messageId, replyMessage, replyMarkup: inlineReplyMarkup);
         }
 
@@ -609,26 +620,24 @@ namespace TelegramBot.Services
         /// </summary>
         /// <param name="chat">Чат.</param>
         /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
-        /// <param name="gameParams">Параметры игры.</param>
         /// <exception cref="CommandProcessingException"></exception>
-        private async Task SendChooseGamePrivacyMenu(Chat chat, int messageId, GameParams gameParams)
+        private async Task SendChooseGamePrivacyMenu(Chat chat, int messageId)
         {
-            if (gameParams == null || gameParams.KindOfSport == KindOfSport.Default)
-            {
-                throw new CommandProcessingException("Отсутствуют данные о виде спорта");
-            }
-
             string replyMessage = "Выберите уровень приватности игры:";
             IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(new[]
             {
                 new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton("Частная", $"{NewGameCommand} {new GameParams(gameParams){IsPublic = false}.ToJson()}"),
-                    new InlineKeyboardCallbackButton("Общедоступная", $"{NewGameCommand} {new GameParams(gameParams){IsPublic = true}.ToJson()}")
+                    new InlineKeyboardCallbackButton("Частная", $"{NewGameCommand}{CommandAndParamsSplitter}{false}")
                 },
                 new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton("Отмена", MenuCommand)
+                    new InlineKeyboardCallbackButton("Общедоступная", $"{NewGameCommand}{CommandAndParamsSplitter}{true}")
+                },
+                new InlineKeyboardButton[]
+                {
+                    new InlineKeyboardCallbackButton("Завершить", MainMenuCommand.ToString()),
+                    new InlineKeyboardCallbackButton("Далее", NewGameCommand.ToString())
                 }
             });
             await this.BotClient.EditMessageTextAsync(chat, messageId, replyMessage, replyMarkup: inlineReplyMarkup);
@@ -639,43 +648,15 @@ namespace TelegramBot.Services
         /// </summary>
         /// <param name="chat">Чат.</param>
         /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
-        /// <param name="gameParams">Параметры игры.</param>
         /// <exception cref="CommandProcessingException"></exception>
-        private async Task SetGame(Chat chat, int messageId, GameParams gameParams)
+        private async Task StartWaitingGameParams(Chat chat, int messageId)
         {
-            ObjectId gameId;
-            if (gameParams.Id.IsDefault())
-            {
-                var game = new Game(gameParams.Player)
-                {
-                    KindOfSport = gameParams.KindOfSport,
-                    IsPublic = gameParams.IsPublic
-                };
-
-                gameId = this._repository.Add(game);
-            }
-            else
-            {
-                var game = this._repository.Get(new Game(gameParams.Id)).FirstOrDefault();
-                if (game == null)
-                {
-                    throw new CommandProcessingException(GameNotExist);
-                }
-                this._repository.Update(game.ApplyGameParams(gameParams));
-                gameId = game.Id;
-            }
-
-            lock (this._userGameConfigureSession)
-            {
-                this._userGameConfigureSession[gameParams.Player.TelegramId] = gameId;
-            }
             IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(new InlineKeyboardButton[]
             {
-                new InlineKeyboardCallbackButton("Завершить создание", FinishCommand)
+                new InlineKeyboardCallbackButton("Завершить ввод параметров", FinishCommand.ToString())
             });
-            string text = !gameParams.Id.IsDefault()
-                ? "Введите название, максимальное количество игроков в команде и дату начала игры в соответствии с приведённым ниже примером:\nНазвание игры\n5\n20:00 06.10.2017"
-                : "Игра создана. Введите название, максимальное количество игроков в команде и дату начала игры в соответствии с приведённым ниже примером:\nНазвание игры\n5\n20:00 06.10.2017";
+            string text =
+                "Введите название, максимальное количество игроков в команде и дату начала игры в соответствии с приведённым ниже примером:\nНазвание игры\n5\n20:00 06.10.2017";
             await this.BotClient.EditMessageTextAsync(chat, messageId, replyMarkup: inlineReplyMarkup, text: text);
         }
 
@@ -685,19 +666,25 @@ namespace TelegramBot.Services
         /// <param name="chat">Чат.</param>
         /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
         /// <param name="joinTo">Указывает к кому присоединиться.</param>
-        /// <param name="gameParams">Параметры игры.</param>
+        /// <param name="gameId">Идентификатор Игры.</param>
+        /// <param name="playerId">Идентификатор участника.</param>
         /// <exception cref="CommandProcessingException"></exception>
-        private void JoinGame(Chat chat, int messageId, string joinTo, GameParams gameParams)
+        private void JoinGame(Chat chat, int messageId, CallbackBotCommands joinTo, ObjectId gameId, ObjectId playerId)
         {
-            if (gameParams == null || gameParams.Id.IsDefault())
+            if (gameId.IsDefault())
             {
-                throw new CommandProcessingException(BadData);
+                throw new CommandProcessingException(BadDataError);
             }
             
-            var game = this._repository.Get(new Game(gameParams.Id)).FirstOrDefault();
+            var game = this._repository.Get<Game>(gameId);
             if (game == null)
             {
-                throw new CommandProcessingException(GameNotExist);
+                throw new CommandProcessingException(GameNotExistError);
+            }
+
+            if (!game.IsPublic && game.ChatId != chat.Id)
+            {
+                throw new CommandProcessingException(PrivateGameIsAlreadyAdded);
             }
 
             if (game.FirstTeam == null)
@@ -709,31 +696,34 @@ namespace TelegramBot.Services
                 game.SecondTeam = new Team(string.Empty);
             }
             
-            if (joinTo.StartsWith(JoinFirstCommand))
+            switch (joinTo)
             {
-                if (game.FirstTeam.Players.Count == game.PlayersPerTeam)
-                {
+                case JoinFirstCommand:
+                    if (game.FirstTeam.PlayerIds.Count == game.PlayersPerTeam)
+                    {
+                        break;
+                    }
+                    game.SecondTeam.PlayerIds.Remove(playerId);
+                    if (game.FirstTeam.PlayerIds.Add(playerId))
+                    {
+                        this._repository.Replace(game);
+                    }
+                    break;
+                case JoinSecondCommand:
+                    if (game.SecondTeam.PlayerIds.Count == game.PlayersPerTeam)
+                    {
+                        break;
+                    }
+                    game.FirstTeam.PlayerIds.Remove(playerId);
+                    if (game.SecondTeam.PlayerIds.Add(playerId))
+                    {
+                        this._repository.Replace(game);
+                    }
+                    break;
+                default:
                     return;
-                }
-                game.SecondTeam.Players.Remove(gameParams.Player);
-                if (game.FirstTeam.Players.Add(gameParams.Player))
-                {
-                    this._repository.Update(game);
-                }
             }
-            else
-            {
-                if (game.SecondTeam.Players.Count == game.PlayersPerTeam)
-                {
-                    return;
-                }
-                game.FirstTeam.Players.Remove(gameParams.Player);
-                if (game.SecondTeam.Players.Add(gameParams.Player))
-                {
-                    this._repository.Update(game);
-                }
-            }
-            
+
             this.SendGameParamsMessage(chat, messageId, game);
         }
 
@@ -742,25 +732,31 @@ namespace TelegramBot.Services
         /// </summary>
         /// <param name="chat">Чат.</param>
         /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
-        /// <param name="gameParams">Параметры игры.</param>
+        /// <param name="gameId">Идентификатор Игры.</param>
+        /// <param name="playerId">Идентификатор участника.</param>
         /// <exception cref="CommandProcessingException"></exception>
-        private void DeclineGame(Chat chat, int messageId, GameParams gameParams)
+        private void DeclineGame(Chat chat, int messageId, ObjectId gameId, ObjectId playerId)
         {
-            if (gameParams == null || gameParams.Id.IsDefault())
+            if (gameId.IsDefault())
             {
                 throw new CommandProcessingException("Некорректные данные");
             }
            
-            var game = this._repository.Get(new Game(gameParams.Id)).FirstOrDefault();
+            var game = this._repository.Get<Game>(gameId);
             if (game == null)
             {
                 throw new CommandProcessingException("Игра не существует");
             }
 
-            if ((game.FirstTeam?.Players?.Remove(gameParams.Player) ?? false) ||
-                (game.SecondTeam?.Players?.Remove(gameParams.Player) ?? false))
+            if (!game.IsPublic && game.ChatId != chat.Id)
             {
-                this._repository.Update(game);
+                throw new CommandProcessingException(PrivateGameIsAlreadyAdded);
+            }
+
+            if ((game.FirstTeam?.PlayerIds?.Remove(playerId) ?? false) ||
+                (game.SecondTeam?.PlayerIds?.Remove(playerId) ?? false))
+            {
+                this._repository.Replace(game);
             }
 
             this.SendGameParamsMessage(chat, messageId, game);
@@ -779,43 +775,10 @@ namespace TelegramBot.Services
                 throw new CommandProcessingException("Некорректные данные");
             }
             await this.BotClient.SendTextMessageAsync(chat,
-                "Команда для добавления игры в чат. Чтобы добавить игру в чат, скопируйте сообщение ниже и отправьте в целевой чат.");
+                "Чтобы добавить игру в чат, скопируйте сообщение ниже и отправьте в целевой чат.");
             await this.BotClient.SendTextMessageAsync(chat, $"/{objectId}");
         }
-
-        /// <summary>
-        /// Изменяет параметры игры.
-        /// </summary>
-        /// <param name="chat">Чат.</param>
-        /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
-        /// <param name="player">Игрок.</param>
-        /// <param name="rawGameId">Идентификатор игры в MongoDB.</param>
-        /// <exception cref="CommandProcessingException"></exception>
-        private async Task FixGame(Chat chat, int messageId, Player player, string rawGameId)
-        {
-            ObjectId gameId;
-            if (string.IsNullOrEmpty(rawGameId))
-            {
-                throw new CommandProcessingException(BadData);
-            }
-
-            if (!ObjectId.TryParse(rawGameId, out gameId))
-            {
-                throw new CommandProcessingException(BadGameId);
-            }
-
-            lock (this._userGameConfigureSession)
-            {
-                this._userGameConfigureSession[player.TelegramId] = gameId;
-            }
-            IReplyMarkup inlineReplyMarkup = new InlineKeyboardMarkup(new InlineKeyboardButton[]
-            {
-                new InlineKeyboardCallbackButton("Завершить редактирование", FinishCommand)
-            });
-            await this.BotClient.EditMessageTextAsync(chat, messageId, replyMarkup: inlineReplyMarkup, text: "Редактирование игры");
-            this.SendChooseKindOfSportMenu(chat, 0, new GameParams {Id = gameId});
-        }
-
+        
         /// <summary>
         /// Добавляет или обновляет сообщение с параметрами игры в чате.
         /// </summary>
@@ -824,22 +787,39 @@ namespace TelegramBot.Services
         /// <param name="game">Игра.</param>
         private async void SendGameParamsMessage(Chat chat, int messageId, Game game)
         {
+            var creator = this._repository.Get<Player>(game.CreatorId);
             string firstTeamName = string.IsNullOrEmpty(game.FirstTeam?.Name) ? "А" : game.FirstTeam.Name;
             string secondTeamName = string.IsNullOrEmpty(game.SecondTeam?.Name) ? "Б" : game.SecondTeam.Name;
-            Func<Player, string> userNameSelector = player => !string.IsNullOrEmpty(player.Nickname) ? $"@{player.Nickname}" : $"{player.Name} {player.Surname}".Trim();
-            string privacy = game.IsPublic ? "Общедоступная" : "Частная";
-            string addGameMessage = string.Format(GameInfo, game.Name, game.KindOfSport.GetElementDescription(), privacy, game.PlayersPerTeam, game.StartTime.AddHours(game.Creator.TimeZone).ToString(DateTimeFormat)) + "\n" +
-                                    $"{(game.FirstTeam != null && game.FirstTeam.Players.Any() ? $"Команда {firstTeamName}:\n{string.Join(", ", game.FirstTeam.Players.Select(userNameSelector))}\n" : $"Команда {firstTeamName}:\n")}" +
-                                    $"{(game.SecondTeam != null && game.SecondTeam.Players.Any() ? $"Команда {secondTeamName}:\n{string.Join(", ", game.SecondTeam.Players.Select(userNameSelector))}" : $"Команда {secondTeamName}:\n")}";
+            var restrictedPlayerIds = new List<ObjectId>();
+            Func<ObjectId, string> userNameSelector = teamMemberId =>
+            {
+                var teamMember = this._repository.Get<Player>(teamMemberId);
+                var member = this.BotClient.GetChatMemberAsync(chat, teamMember.TelegramId).Result;
+                if (member == null ||
+                    (member.Status != ChatMemberStatus.Kicked && member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Restricted))
+                {
+                    return !string.IsNullOrEmpty(teamMember.Nickname) ? $"@{teamMember.Nickname}" : $"{teamMember.Name} {teamMember.Surname}".Trim();
+                }
+
+                restrictedPlayerIds.Add(teamMemberId);
+                return string.Empty;
+            };
+
+            string gameMessage = GenerateGameInfoMessage(game, creator, userNameSelector);
+            restrictedPlayerIds.ForEach(id =>
+            {
+                game.FirstTeam?.PlayerIds?.Remove(id);
+                game.SecondTeam?.PlayerIds?.Remove(id);
+            });
+            this._repository.Replace(game);
             var buttons = new List<InlineKeyboardButton>();
-            string gameParams = new GameParams {Id = game.Id}.ToJson();
-            if (game.FirstTeam?.Players?.Count != game.PlayersPerTeam)
+            if (game.FirstTeam?.PlayerIds?.Count != game.PlayersPerTeam)
             {
-                buttons.Add(new InlineKeyboardCallbackButton($"За {firstTeamName}", $"{JoinFirstCommand} {gameParams}"));
+                buttons.Add(new InlineKeyboardCallbackButton($"За {firstTeamName}", $"{JoinFirstCommand}{CommandAndParamsSplitter}{game.Id}"));
             }
-            if (game.SecondTeam?.Players?.Count != game.PlayersPerTeam)
+            if (game.SecondTeam?.PlayerIds?.Count != game.PlayersPerTeam)
             {
-                buttons.Add(new InlineKeyboardCallbackButton($"За {secondTeamName}", $"{JoinSecondCommand} {gameParams}"));
+                buttons.Add(new InlineKeyboardCallbackButton($"За {secondTeamName}", $"{JoinSecondCommand}{CommandAndParamsSplitter}{game.Id}"));
             }
 
             IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[]
@@ -847,17 +827,24 @@ namespace TelegramBot.Services
                 buttons.ToArray(), 
                 new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton("Отказаться", $"{DeclineCommand} {gameParams}")
+                    new InlineKeyboardCallbackButton("Отказаться", $"{DeclineCommand}{CommandAndParamsSplitter}{game.Id}")
                 }, 
             });
 
-            if (messageId == 0)
+            try
             {
-                await this.BotClient.SendTextMessageAsync(chat, addGameMessage, replyMarkup: inlineMarkup);
-                return;
-            }
+                if (messageId == 0)
+                {
+                    await this.BotClient.SendTextMessageAsync(chat, gameMessage, replyMarkup: inlineMarkup);
+                    return;
+                }
 
-            await this.BotClient.EditMessageTextAsync(chat, messageId, addGameMessage, replyMarkup: inlineMarkup);
+                await this.BotClient.EditMessageTextAsync(chat, messageId, gameMessage, replyMarkup: inlineMarkup);
+            }
+            catch (Exception)
+            {
+                // No action
+            }
         }
 
         /// <summary>
@@ -865,34 +852,27 @@ namespace TelegramBot.Services
         /// </summary>
         /// <param name="chat">Чат.</param>
         /// <param name="messageId">Идентификатор сообщения-инициатора.</param>
-        /// <param name="playerId">Идентификатор игрока.</param>
-        /// <param name="rawGameId">Идентификатор игры.</param>
+        /// <param name="player">Игрок.</param>
+        /// <param name="deleteParams">Параметры для удаления Игры.</param>
         /// <exception cref="CommandProcessingException"></exception>
-        private async Task DeleteGame(Chat chat, int messageId, ObjectId playerId, string rawGameId)
+        private async Task DeleteGame(Chat chat, int messageId, Player player, string deleteParams)
         {
+            int splitterIndex = deleteParams.IndexOf(ParamsSplitter);
+            string rawGameId = deleteParams.Substring(0, splitterIndex);
             ObjectId gameId;
-            if (string.IsNullOrEmpty(rawGameId))
-            {
-                throw new CommandProcessingException(BadData);
-            }
-
             if (!ObjectId.TryParse(rawGameId, out gameId))
             {
-                throw new CommandProcessingException(BadGameId);
+                throw new CommandProcessingException(BadGameIdError);
             }
 
-            var game = this._repository.Get(new Game(gameId)).FirstOrDefault();
+            var game = this._repository.Get<Game>(gameId);
             if (game == null)
             {
-                throw new CommandProcessingException(GameNotExist);
+                throw new CommandProcessingException(GameNotExistError);
             }
-            if (!game.Creator.Id.Equals(playerId))
-            {
-                throw new CommandProcessingException(NotCreatorTryDelete);
-            }
-
+            
             this._repository.Delete<Game>(game.Id);
-            await this.BotClient.EditMessageTextAsync(chat, messageId, "Игра удалена");
+            await this.SendGamesViewMenu(chat, messageId, player, deleteParams.Remove(0, splitterIndex + 1));
         }
 
         /// <summary>
@@ -907,56 +887,114 @@ namespace TelegramBot.Services
             int gameNumber = 0;
             if (!string.IsNullOrEmpty(number) && !int.TryParse(number.Trim(), out gameNumber))
             {
-                throw new CommandProcessingException(BadData);
+                throw new CommandProcessingException(BadDataError);
             }
 
-            var game = gameNumber == 0
-                ? this._repository.Get(new Game(player)).LastOrDefault()
-                : this._repository.Get(new Game(player), gameNumber, 1).FirstOrDefault();
-            if (game == null)
+            var games = this._repository.Get(new Game(player.Id));
+            if (games == null || games.Count == 0)
             {
-                await this.BotClient.EditMessageTextAsync(chat, messageId, "У Вас нет незавершённых игр");
+                await this.BotClient.EditMessageTextAsync(chat, messageId, "У Вас нет игр");
                 return;
             }
 
+            Game currentGame;
             var inlineNavigationKeyboard = new List<InlineKeyboardButton>();
-            switch (gameNumber)
+            if (games.Count == 1)
             {
-                case 0:
-                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<<", ToFirstGameCommand));
-                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<", $"{PreviousGameCommand} {gameNumber - 1}"));
-                    break;
-                case 1:
-                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">", $"{NextGameCommand} {gameNumber + 1}"));
-                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">>", ToLastGameCommand));
-                    break;
-                default:
-                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<<", ToFirstGameCommand));
-                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<", $"{PreviousGameCommand} {gameNumber - 1}"));
-                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">", $"{NextGameCommand} {gameNumber + 1}"));
-                    inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">>", ToLastGameCommand));
-                    break;
+                gameNumber = 1;
+                currentGame = games.First();
+            }
+            else if (gameNumber <= 0 || games.Count <= gameNumber)
+            {
+                gameNumber = games.Count;
+                currentGame = games.Last();
+                inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<<", ToFirstGameCommand.ToString()));
+                inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<", $"{PreviousGameCommand}{CommandAndParamsSplitter}{gameNumber - 1}"));
+            }
+            else if (gameNumber == 1)
+            {
+                currentGame = games[gameNumber - 1];
+                inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">", $"{NextGameCommand}{CommandAndParamsSplitter}{gameNumber + 1}"));
+                inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">>", ToLastGameCommand.ToString()));
+            }
+            else
+            {
+                currentGame = games[gameNumber - 1];
+                inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<<", ToFirstGameCommand.ToString()));
+                inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton("<", $"{PreviousGameCommand}{CommandAndParamsSplitter}{gameNumber - 1}"));
+                inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">", $"{NextGameCommand}{CommandAndParamsSplitter}{gameNumber + 1}"));
+                inlineNavigationKeyboard.Add(new InlineKeyboardCallbackButton(">>", ToLastGameCommand.ToString()));
             }
 
-            var gameInfoMessage = $"{gameNumber}.{Environment.NewLine}{string.Format(GameInfo, game.Name, game.KindOfSport.GetElementDescription(), game.StartTime.ToString(DateTimeFormat), game.Id)}";
+            Func<ObjectId, string> userNameSelector = teamMemberId =>
+            {
+                var teamMember = this._repository.Get<Player>(teamMemberId);
+                return !string.IsNullOrEmpty(teamMember.Nickname) ? $"@{teamMember.Nickname}" : $"{teamMember.Name} {teamMember.Surname}".Trim();
+            };
+            var gameInfoMessage = $"{gameNumber} из {games.Count}{Environment.NewLine}" +
+                                  GenerateGameInfoMessage(currentGame, player, userNameSelector);
             IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[]
             {
                 new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton("Получить код", $"{GetGameCodeCommand} {new GameParams{Id = game.Id}.ToJson()}")
+                    new InlineKeyboardCallbackButton("Получить код", $"{GetGameCodeCommand}{CommandAndParamsSplitter}{currentGame.Id}")
                 },
                 new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton("Редактировать", $"{FixGameCommand} {new GameParams{Id = game.Id}.ToJson()}")
+                    new InlineKeyboardCallbackButton("Редактировать", $"{FixGameCommand}{CommandAndParamsSplitter}{currentGame.Id}")
                 },
                 new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton("Удалить", $"{DeleteGameCommand} {new GameParams{Id = game.Id}.ToJson()}")
+                    new InlineKeyboardCallbackButton("Удалить", $"{DeleteGameCommand}{CommandAndParamsSplitter}{currentGame.Id}{ParamsSplitter}{gameNumber}")
+                },
+                new InlineKeyboardButton[]
+                {
+                    new InlineKeyboardCallbackButton("Главное меню", MainMenuCommand.ToString())
                 },
                 inlineNavigationKeyboard.ToArray()
             });
-            await this.BotClient.EditMessageTextAsync(chat, messageId, gameInfoMessage, replyMarkup: inlineMarkup);
+
+            try
+            {
+                if (messageId == 0)
+                {
+                    await this.BotClient.SendTextMessageAsync(chat, gameInfoMessage, replyMarkup: inlineMarkup);
+                    return;
+                }
+                await this.BotClient.EditMessageTextAsync(chat, messageId, gameInfoMessage, replyMarkup: inlineMarkup);
+            }
+            catch (Exception)
+            {
+                // No action
+            }
         }
         #endregion
+
+        /// <summary>
+        /// Генерирует сообщение с информацией об Игре.
+        /// </summary>
+        /// <param name="game">Игра.</param>
+        /// <param name="creator">Создатель игры.</param>
+        /// <param name="userNameSelector">Функция-сборщик списка игроков.</param>
+        /// <returns></returns>
+        private static string GenerateGameInfoMessage(Game game, Player creator, Func<ObjectId, string> userNameSelector)
+        {
+            string firstTeamName = string.IsNullOrEmpty(game.FirstTeam?.Name) ? "А" : game.FirstTeam.Name;
+            string secondTeamName = string.IsNullOrEmpty(game.SecondTeam?.Name) ? "Б" : game.SecondTeam.Name;
+            string gmt = " (" + (creator.TimeZone >= 0 ? $"+{creator.TimeZone}" : creator.TimeZone.ToString()) + " GMT)";
+            return 
+                string.Format(GameInfoPattern,
+                              game.Name,
+                              game.KindOfSport.GetElementDescription(),
+                              game.IsPublic ? "Общедоступная" : "Частная",
+                              game.PlayersPerTeam,
+                              game.StartTime.AddHours(creator.TimeZone).ToString(DateTimeFormat)) + gmt + "\n" +
+                              (game.FirstTeam != null && game.FirstTeam.PlayerIds.Any()
+                                  ? $"Команда {firstTeamName}:\n{string.Join(",", game.FirstTeam.PlayerIds.Select(userNameSelector).Where(nick => !string.IsNullOrEmpty(nick)))}\n"
+                                  : $"Команда {firstTeamName}:\n") +
+                              (game.SecondTeam != null && game.SecondTeam.PlayerIds.Any()
+                                  ? $"Команда {secondTeamName}:\n{string.Join(",", game.SecondTeam.PlayerIds.Select(userNameSelector).Where(nick => !string.IsNullOrEmpty(nick)))}"
+                                  : $"Команда {secondTeamName}:\n");
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using TelegramBot.Models;
 
 namespace TelegramBot.Extensions
 {
@@ -9,13 +10,13 @@ namespace TelegramBot.Extensions
     public static class StringExtensions
     {
         /// <summary>
-        /// Пытается извлечь параметры команды.
+        /// Извлекает параметры команды.
         /// </summary>
         /// <typeparam name="TModel">Тип модели параметров.</typeparam>
         /// <param name="rawData">Сырые данные.</param>
         /// <param name="command">Команда.</param>
         /// <param name="model">Объект модели параметров.</param>
-        /// <returns>true, если параметры .</returns>
+        /// <returns></returns>
         public static bool ExtractCommandParams<TModel>(this string rawData, string command, out TModel model)
         {
             try
@@ -36,6 +37,36 @@ namespace TelegramBot.Extensions
 
             model = default(TModel);
             return false;
+        }
+
+        /// <summary>
+        /// Разделяет данные на команду и параметры.
+        /// </summary>
+        /// <param name="rawData">Данные.</param>
+        /// <param name="splitter">Разделитель данных.</param>
+        /// <param name="param">Объект модели параметров.</param>
+        /// <returns>Возвращает команду.</returns>
+        public static CallbackBotCommands SplitCommandAndParams(this string rawData, char splitter, out string param)
+        {
+            try
+            {
+                var splitterIndex = rawData.IndexOf(splitter);
+                if (splitterIndex > 0 && rawData.Length > splitterIndex + 1)
+                {
+                    param = rawData.Substring(splitterIndex + 1);
+                    return (CallbackBotCommands) Enum.Parse(typeof(CallbackBotCommands), rawData.Remove(splitterIndex));
+                }
+
+                param = string.Empty;
+                return (CallbackBotCommands)Enum.Parse(typeof(CallbackBotCommands), rawData.TrimEnd(splitter));
+            }
+            catch (Exception)
+            {
+                // No action
+            }
+
+            param = string.Empty;
+            return CallbackBotCommands.UnknownCommand;
         }
 
         /// <summary>

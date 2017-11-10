@@ -11,6 +11,14 @@ namespace DataModels.Interfaces
     public interface IRepository
     {
         /// <summary>
+        /// Получает объект по идентификатору.
+        /// </summary>
+        /// <typeparam name="TModel">Тип объекта.</typeparam>
+        /// <param name="id">Идентификатор.</param>
+        /// <returns></returns>
+        TModel Get<TModel>(ObjectId id) where TModel : IMongoModel;
+
+        /// <summary>
         /// Получает данные согласно фильтру.
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
@@ -41,8 +49,15 @@ namespace DataModels.Interfaces
         /// Обновляет элемент в хранилище.
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
-        /// <param name="model">Обновлённый элемент.</param>
+        /// <param name="model">Обновляющий элемент.</param>
         void Update<TModel>(TModel model) where TModel : class, IMongoModel;
+
+        /// <summary>
+        /// Заменяет элемент в хранилище.
+        /// </summary>
+        /// <typeparam name="TModel">Тип модели.</typeparam>
+        /// <param name="model">Заменяющий элемент.</param>
+        void Replace<TModel>(TModel model) where TModel : class, IMongoModel;
 
         /// <summary>
         /// Удаляет элемент из хранилища.

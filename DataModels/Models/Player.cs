@@ -10,7 +10,7 @@ namespace DataModels.Models
     /// <summary>
     /// Класс описывает игрока.
     /// </summary>
-    public sealed class Player : User, IMongoModel
+    public sealed class Player : TelegramUser, IMongoModel
     {
         /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="Player"/>.
@@ -43,6 +43,21 @@ namespace DataModels.Models
         [BsonId]
         [JsonConverter(typeof(BsonObjectIdConverter))]
         public ObjectId Id { get; set; }
+
+        /// <summary>
+        /// Получает или задает псевдоним игрока.
+        /// </summary>
+        public string Nickname { get; set; }
+
+        /// <summary>
+        /// Получает или задает имя игрока.
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Получает или задает фамилию игрока.
+        /// </summary>
+        public string Surname { get; set; }
 
         /// <summary>
         /// Получает или задает смещение от UTC часового пояса игрока.
