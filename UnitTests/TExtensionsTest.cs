@@ -28,11 +28,11 @@ namespace UnitTests
         [TestMethod]
         public void ExtractCommandParamsTest()
         {
-            var game = new Game(ObjectId.Parse("5a041e8206a63808cc0ea74e"), true);
+            var game = new Game(ObjectId.Parse("5a08638706a6387034f5f67e"), false);
             var mongoUrl = new MongoUrl("mongodb://localhost:27017/TeamCreator");
             var filter = Builders<Game>.Filter.Eq("_id", game.Id);
-            var updateDefinition = Builders<Game>.Update;
-            var update = updateDefinition.Combine(updateDefinition.Set(nameof(game.Name), game.Name), updateDefinition.Set(nameof(game.IsPublic), game.IsPublic));
+            //var updateDefinition = Builders<Game>.Update;
+            var update = game.ToMongoUpdateFilter();
             new MongoClient(mongoUrl).GetDatabase(mongoUrl.DatabaseName).GetCollection<Game>(typeof(Game).Name).UpdateOne(filter, update);
         }
     }

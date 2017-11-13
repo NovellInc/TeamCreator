@@ -17,5 +17,9 @@ namespace ApiClient.Models
         /// Получает или задает роль пользователя.
         /// </summary>
         public UserRole Role { get; set; }
+
+        public SystemUser(int telegramId) : base(telegramId)
+        {
+        }
     }
 }

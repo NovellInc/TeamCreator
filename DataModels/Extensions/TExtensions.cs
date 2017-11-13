@@ -126,9 +126,7 @@ namespace DataModels.Extensions
                                         }
 
                                         var data = property.GetMethod.Invoke(model, null);
-                                        return data.IsDefault()
-                                        ? null
-                                        : Builders<TModel>.Update.Set(property.Name, data);
+                                        return Builders<TModel>.Update.Set(property.Name, data);
                                     })
                                     .Where(parameter => parameter != null)
                                     .ToArray();

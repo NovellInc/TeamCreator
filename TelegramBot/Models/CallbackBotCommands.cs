@@ -74,35 +74,30 @@
         /// Команда на получение меню последней команды списка.
         /// </summary>
         ToLastGameCommand = 13,
-
-        /// <summary>
-        /// Команда на получение меню редактирования игры.
-        /// </summary>
-        FixGameCommand = 14,
-
+        
         /// <summary>
         /// Команда на удаление игры.
         /// </summary>
-        DeleteGameCommand = 15,
+        DeleteGameCommand = 14,
         
         /// <summary>
         /// Команда на получение списка созданных игр.
         /// </summary>
-        MyGamesCommand = 16,
+        MyGamesCommand = 15,
 
         /// <summary>
         /// Команда на присоединение к первой команде в контексте игры.
         /// </summary>
-        JoinFirstCommand = 17,
+        JoinFirstCommand = 16,
 
         /// <summary>
         /// Команда на присоединение ко второй команде в контексте игры.
         /// </summary>
-        JoinSecondCommand = 18,
+        JoinSecondCommand = 17,
 
         /// <summary>
         /// Команда для отказа участвовать в игре.
         /// </summary>
-        DeclineCommand = 19
+        DeclineCommand = 18
     }
 }
