@@ -11,6 +11,11 @@
         User,
 
         /// <summary>
+        /// Телеграм бот.
+        /// </summary>
+        Bot,
+
+        /// <summary>
         /// Администратор.
         /// </summary>
         Admin
