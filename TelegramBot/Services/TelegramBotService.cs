@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dal.Interfaces;
 using DataModels.Enums;
 using DataModels.Extensions;
 using DataModels.Interfaces;
@@ -87,7 +88,7 @@ namespace TelegramBot.Services
         /// <summary>
         /// Хранилище.
         /// </summary>
-        private readonly IRepository _repository;
+        private readonly IMongoRepository _repository;
 
         static TelegramBotService()
         {
@@ -113,7 +114,7 @@ namespace TelegramBot.Services
         /// </summary>
         /// <param name="token">Токен бота.</param>
         /// <param name="repository">Хранилище.</param>
-        public TelegramBotService(string token, IRepository repository)
+        public TelegramBotService(string token, IMongoRepository repository)
         {
             this._notifierTimers = new Dictionary<ObjectId, Timer>();
             this.BotClient = new TelegramBotClient(token);

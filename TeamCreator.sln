@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiClient", "ApiClient\ApiC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{041B3CA1-83F0-43E0-8BE6-E6390FA7041C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dal", "Dal\Dal.csproj", "{1B2EF476-CC6F-480F-93F2-8C5FC6B7E8E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{041B3CA1-83F0-43E0-8BE6-E6390FA7041C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{041B3CA1-83F0-43E0-8BE6-E6390FA7041C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{041B3CA1-83F0-43E0-8BE6-E6390FA7041C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B2EF476-CC6F-480F-93F2-8C5FC6B7E8E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B2EF476-CC6F-480F-93F2-8C5FC6B7E8E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B2EF476-CC6F-480F-93F2-8C5FC6B7E8E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B2EF476-CC6F-480F-93F2-8C5FC6B7E8E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

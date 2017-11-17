@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using DataModels.Interfaces;
 using MongoDB.Bson;
 
-namespace DataModels.Interfaces
+namespace Dal.Interfaces
 {
     /// <summary>
     /// Интерфейс хранилища.
     /// </summary>
-    public interface IRepository
+    public interface IMongoRepository
     {
         /// <summary>
         /// Получает объект по идентификатору.

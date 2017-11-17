@@ -1,6 +1,6 @@
 ﻿using System;
-using System.IO;
-using System.Reflection;
+using System.Web.Http;
+using System.Web.Http.SelfHost;
 using NLog;
 
 namespace WebAPI.Services

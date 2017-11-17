@@ -5,9 +5,9 @@ using Dal.Repositories;
 using MongoDB.Driver;
 using Ninject.Modules;
 using NLog;
-using TelegramBot.Services;
+using WebAPI.Services;
 
-namespace TelegramBot.NinjectModules
+namespace WebAPI.NinjectModules
 {
     /// <summary>
     /// Класс определяет привязки в приложении.
@@ -31,10 +31,10 @@ namespace TelegramBot.NinjectModules
                     .To<MongoRepository>()
                     .InSingletonScope()
                     .WithConstructorArgument("mongoUrl", mongoUrl);
-                this.Bind<TelegramBotService>()
+                this.Bind<RestService>()
                     .ToSelf()
                     .InSingletonScope()
-                    .WithConstructorArgument("token", ConfigurationManager.AppSettings["TelegramBotToken"]);
+                    .WithConstructorArgument("baseAddress", ConfigurationManager.AppSettings["baseAddress"]);
             }
             catch (Exception e)
             {

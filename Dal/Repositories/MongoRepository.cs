@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using DataModels.Extensions;
+using Dal.Extensions;
+using Dal.Interfaces;
 using DataModels.Interfaces;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace DataModels.Models
+namespace Dal.Repositories
 {
     /// <summary>
     /// Модель хранилища MongoDB.
     /// </summary>
-    public class MongoRepository : IRepository
+    public class MongoRepository : IMongoRepository
     {
         /// <summary>
         /// Поле идентификатора в хранилище.
