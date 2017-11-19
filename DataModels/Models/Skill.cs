@@ -17,7 +17,7 @@ namespace DataModels.Models
         }
 
         /// <summary>
-        /// Получает вид спорта.
+        /// Получает или задает вид спорта.
         /// </summary>
         public KindOfSport KindOfSport { get; set; }
 

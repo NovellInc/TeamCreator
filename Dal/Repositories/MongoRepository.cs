@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using Dal.Extensions;
 using Dal.Interfaces;
 using DataModels.Interfaces;
+using DataModels.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -46,55 +47,63 @@ namespace Dal.Repositories
         }
 
         /// <summary>
-        /// Получает список объектов согласно фильтру.
+        /// Получает список объектов постранично согласно фильтру.
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="model">Модель объекта для поиска по указанным данным.</param>
         /// <param name="page">Номер страницы из выборки элементов.</param>
-        /// <param name="items">Количество элементов на странице.</param>
+        /// <param name="items">Количество элементов на страницу.</param>
         /// <returns>Возвращает список объектов.</returns>
-        public List<TModel> Get<TModel>(TModel model, int page = 1, int items = 0)
+        public IPagedList<TModel> Get<TModel>(TModel model, int page = 1, int items = 0)
         {
-            if (page < 1)
+            if (page < 1 || items < 0)
             {
                 return null;
             }
 
-            if (items == 0)
-            {
-                return this.GetCollection<TModel>().Find(model.ToMongoFilter()).ToList();
-            }
-           
-            return this.GetCollection<TModel>().Find(model.ToMongoFilter())
-                                               .Skip((page - 1) * items)
-                                               .Limit(items)
-                                               .ToList();
+            return items == 0
+                ? new PagedList<TModel>(this.GetCollection<TModel>().Find(model.ToMongoFilter()).ToList())
+                : new PagedList<TModel>(this.GetCollection<TModel>().Find(model.ToMongoFilter()).ToList(), page, items);
         }
 
         /// <summary>
-        /// Получает данные согласно фильтру.
+        /// Получает данные постранично согласно фильтру.
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="filter">Фильтр, представленный лямбда выражением.</param>
         /// <param name="page">Номер страницы из выборки элементов.</param>
-        /// <param name="items">Количество элементов на странице.</param>
+        /// <param name="items">Количество элементов на страницу.</param>
         /// <returns></returns>
-        public List<TModel> Get<TModel>(Expression<Func<TModel, bool>> filter, int page = 1, int items = 0)
+        public IPagedList<TModel> Get<TModel>(Expression<Func<TModel, bool>> filter, int page = 1, int items = 0)
         {
-            if (page < 1)
+            if (page < 1 || items < 0)
             {
                 return null;
             }
 
-            if (items == 0)
+            return items == 0
+                ? new PagedList<TModel>(this.GetCollection<TModel>().Find(filter).ToList())
+                : new PagedList<TModel>(this.GetCollection<TModel>().Find(filter).ToList(), page, items);
+        }
+
+        /// <summary>
+        /// Получает список объектов постранично согласно фильтру.
+        /// </summary>
+        /// <typeparam name="TModel">Тип модели.</typeparam>
+        /// <param name="filter">Фильтр.</param>
+        /// <param name="page">Номер страницы из выборки элементов.</param>
+        /// <param name="items">Количество элементов на страницу.</param>
+        /// <returns>Возвращает список объектов.</returns>
+        public IPagedList<TModel> Get<TModel>(FilterDefinition<TModel> filter, int page = 1, int items = 0)
+        {
+            if (page < 1 || items < 0)
             {
-                return this.GetCollection<TModel>().Find(filter).ToList();
+                return null;
             }
 
-            return this.GetCollection<TModel>().Find(filter)
-                                               .Skip(page * items)
-                                               .Limit(items)
-                                               .ToList();
+            return items == 0
+                ? new PagedList<TModel>(this.GetCollection<TModel>().Find(filter).ToList())
+                : new PagedList<TModel>(this.GetCollection<TModel>().Find(filter).ToList(), page, items);
         }
 
         /// <summary>

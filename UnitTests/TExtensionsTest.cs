@@ -1,4 +1,5 @@
-﻿using DataModels.Enums;
+﻿using Dal.Extensions;
+using DataModels.Enums;
 using DataModels.Extensions;
 using DataModels.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using DataModels.Interfaces;
+using Extensions;
 using MongoDB.Driver;
 
 namespace Dal.Extensions
@@ -71,25 +71,6 @@ namespace Dal.Extensions
             return !queryParameters.Any()
                 ? null
                 : Builders<TModel>.Update.Combine(queryParameters);
-        }
-
-        /// <summary>
-        /// Определяет является ли значение объекта значением по умолчанию.
-        /// </summary>
-        /// <typeparam name="T">Тип объекта.</typeparam>
-        /// <param name="o">Объект.</param>
-        /// <returns>Возвращает true, если значение объекта является значением по умолчанию.</returns>
-        public static bool IsDefault<T>(this T o)
-        {
-            if (o == null) // ссылочный тип или nullable
-                return true;
-            if (Nullable.GetUnderlyingType(typeof(T)) != null) // nullable, не null
-                return false;
-            var type = o.GetType();
-            if (type.IsClass)
-                return false;
-            else           // тип-значение, есть конструктор по умолчанию
-                return Activator.CreateInstance(type).Equals(o);
         }
     }
 }

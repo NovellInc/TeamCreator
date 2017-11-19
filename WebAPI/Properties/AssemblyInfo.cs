@@ -1,12 +1,11 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("WebAPI")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Team creator Web API")]
+[assembly: AssemblyDescription("Предоставляет API для взаимодействия с сервисом TeamCreator")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("WebAPI")]

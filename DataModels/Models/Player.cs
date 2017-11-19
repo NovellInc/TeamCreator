@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using DataModels.Helpers;
+﻿using DataModels.Helpers;
 using DataModels.Interfaces;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -33,7 +32,7 @@ namespace DataModels.Models
         /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="Player"/>.
         /// </summary>
-        internal Player()
+        public Player()
         {
         }
 
@@ -58,17 +57,7 @@ namespace DataModels.Models
         /// Получает или задает фамилию игрока.
         /// </summary>
         public string Surname { get; set; }
-
-        /// <summary>
-        /// Получает или задает смещение от UTC часового пояса игрока.
-        /// </summary>
-        public int TimeZone { get; set; }
-
-        /// <summary>
-        /// Получает или задает язык, выбранный пользователем для общения с ботом.
-        /// </summary>
-        public CultureInfo CultureInfo { get; set; }
-
+        
         /// <summary>
         /// Получает или задает город игрока.
         /// </summary>

@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Web.Http;
 using System.Web.Http.SelfHost;
+using Dal.Interfaces;
+using Ninject.Web.WebApi;
 using NLog;
+using WebAPI.NinjectModules;
 
 namespace WebAPI.Services
 {
@@ -29,7 +32,8 @@ namespace WebAPI.Services
         /// Инициализирует новый экземпляр класса <see cref="RestService"/>.
         /// </summary>
         /// <param name="baseAddress">Адрес, по которому доступен API.</param>
-        public RestService(Uri baseAddress)
+        /// <param name="mongoRepository">Хранилище.</param>
+        public RestService(string baseAddress, IMongoRepository mongoRepository)
         {
             if (baseAddress == null)
             {
@@ -37,9 +41,10 @@ namespace WebAPI.Services
                                                 "Необходимо указать базовый адрес REST API сервиса");
             }
 
-            this._baseAddress = baseAddress.ToString();
+            this._baseAddress = baseAddress;
             var selfHostConfiguraiton = new HttpSelfHostConfiguration(this._baseAddress);
             selfHostConfiguraiton.MapHttpAttributeRoutes();
+            selfHostConfiguraiton.DependencyResolver = new NinjectDependencyResolver(CustomWebApiModule.CreateKernel(selfHostConfiguraiton, mongoRepository));
             selfHostConfiguraiton.EnsureInitialized();
             this._server = new HttpSelfHostServer(selfHostConfiguraiton);
         }
@@ -68,7 +73,7 @@ namespace WebAPI.Services
         /// </summary>
         public void Dispose()
         {
-            this._server.Dispose();
+            this._server?.Dispose();
         }
     }
 }

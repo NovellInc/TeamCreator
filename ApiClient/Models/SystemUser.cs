@@ -18,6 +18,10 @@ namespace ApiClient.Models
         /// </summary>
         public UserRole Role { get; set; }
 
+        public SystemUser() : base(0)
+        {
+        }
+
         public SystemUser(int telegramId) : base(telegramId)
         {
         }

@@ -34,7 +34,7 @@ namespace DataModels.Models
         /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="Team"/>.
         /// </summary>
-        internal Team()
+        public Team()
         {
         }
 

@@ -7,6 +7,7 @@ using ApiClient.Extensions;
 using ApiClient.Models;
 using DataModels.Extensions;
 using DataModels.Models;
+using Extensions;
 using Newtonsoft.Json;
 using RestSharp;
 

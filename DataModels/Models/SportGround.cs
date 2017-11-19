@@ -30,6 +30,21 @@ namespace DataModels.Models
         public string Address { get; set; }
 
         /// <summary>
+        /// Получает или задает номер телефона.
+        /// </summary>
+        public string PhoneNumber { get; set; }
+
+        /// <summary>
+        /// Получает или задает электронную почту.
+        /// </summary>
+        public string Email { get; set; }
+
+        /// <summary>
+        /// Получает или задает веб-сайт.
+        /// </summary>
+        public string Website { get; set; }
+
+        /// <summary>
         /// Получает или задает арендную плату за час.
         /// </summary>
         public double RentPerHour { get; set; }

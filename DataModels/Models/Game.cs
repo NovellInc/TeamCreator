@@ -2,6 +2,7 @@
 using DataModels.Enums;
 using DataModels.Helpers;
 using DataModels.Interfaces;
+using Extensions;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
@@ -14,9 +15,24 @@ namespace DataModels.Models
     public sealed class Game : IMongoModel
     {
         /// <summary>
+        /// Идентификатор первой команды.
+        /// </summary>
+        private ObjectId _firstTeamId;
+
+        /// <summary>
+        /// Идентификатор второй команды.
+        /// </summary>
+        private ObjectId _secondTeamId;
+
+        /// <summary>
+        /// Идентификатор спортивной площадки.
+        /// </summary>
+        private ObjectId _sportGroundId;
+
+        /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="Game"/>.
         /// </summary>
-        internal Game()
+        public Game()
         {
         }
 
@@ -74,7 +90,7 @@ namespace DataModels.Models
         public ObjectId Id { get; set; }
 
         /// <summary>
-        /// Получает или задает идентификатор создателя игры.
+        /// Получает или задает идентификатор создателя игры <see cref="Player"/>.
         /// </summary>
         [JsonConverter(typeof(BsonObjectIdConverter))]
         public ObjectId CreatorId { get; set; }
@@ -108,20 +124,71 @@ namespace DataModels.Models
         /// Получает или задает максимальное количество игроков в команде.
         /// </summary>
         public int PlayersPerTeam { get; set; }
+        
+        /// <summary>
+        /// Получает или задает идентификатор первой команды <see cref="Team"/>.
+        /// </summary>
+        [JsonConverter(typeof(BsonObjectIdConverter))]
+        public ObjectId FirstTeamId
+        {
+            get
+            {
+                return this._firstTeamId;
+            }
+            set
+            {
+                this._firstTeamId = value;
+                this.HasFirstTeam = value.IsDefault();
+            }
+        }
 
         /// <summary>
-        /// Получает или задает первую команду.
+        /// Признак наличия первой команды.
         /// </summary>
-        public Team FirstTeam { get; set; }
+        public bool HasFirstTeam { get; private set; }
 
         /// <summary>
-        /// Получает или задает вторую команду.
+        /// Получает или задает идентификатор второй команды <see cref="Team"/>.
         /// </summary>
-        public Team SecondTeam { get; set; }
+        [JsonConverter(typeof (BsonObjectIdConverter))]
+        public ObjectId SecondTeamId
+        {
+            get
+            {
+                return this._secondTeamId;
+            }
+            set
+            {
+                this._secondTeamId = value;
+                this.HasSecondTeam = value.IsDefault();
+            }
+        }
 
         /// <summary>
-        /// Спортивная площадка игры.
+        /// Признак наличия второй команды.
         /// </summary>
-        public SportGround SportGround { get; set; }
+        public bool HasSecondTeam { get; private set; }
+
+        /// <summary>
+        /// Получает или задает идентификатор спортивной площадки игры <see cref="SportGround"/>.
+        /// </summary>
+        [JsonConverter(typeof (BsonObjectIdConverter))]
+        public ObjectId SportGroundId
+        {
+            get
+            {
+                return this._sportGroundId;
+            }
+            set
+            {
+                this._sportGroundId = value;
+                this.HasSportGround = value.IsDefault();
+            }
+        }
+
+        /// <summary>
+        /// Признак наличия спортивной площадки игры.
+        /// </summary>
+        public bool HasSportGround { get; private set; }
     }
 }

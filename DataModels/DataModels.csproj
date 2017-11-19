@@ -64,8 +64,10 @@
     <Compile Include="Extensions\ListExtensions.cs" />
     <Compile Include="Helpers\BsonObjectIdConverter.cs" />
     <Compile Include="Interfaces\IMongoModel.cs" />
+    <Compile Include="Interfaces\IPagedList.cs" />
     <Compile Include="Models\Game.cs" />
     <Compile Include="Enums\KindOfSport.cs" />
+    <Compile Include="Models\PagedList.cs" />
     <Compile Include="Models\Player.cs" />
     <Compile Include="Models\Skill.cs" />
     <Compile Include="Models\SportGround.cs" />
@@ -75,6 +77,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Extensions\Extensions.csproj">
+      <Project>{840d347a-ac1a-4f21-abee-1ef16f669efb}</Project>
+      <Name>Extensions</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

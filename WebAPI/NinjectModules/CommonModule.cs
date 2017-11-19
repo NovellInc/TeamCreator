@@ -3,6 +3,7 @@ using System.Configuration;
 using Dal.Interfaces;
 using Dal.Repositories;
 using MongoDB.Driver;
+using Ninject;
 using Ninject.Modules;
 using NLog;
 using WebAPI.Services;
@@ -34,7 +35,8 @@ namespace WebAPI.NinjectModules
                 this.Bind<RestService>()
                     .ToSelf()
                     .InSingletonScope()
-                    .WithConstructorArgument("baseAddress", ConfigurationManager.AppSettings["baseAddress"]);
+                    .WithConstructorArgument("baseAddress", ConfigurationManager.AppSettings["baseAddress"])
+                    .WithConstructorArgument("mongoRepository", this.Kernel.Get<IMongoRepository>());
             }
             catch (Exception e)
             {

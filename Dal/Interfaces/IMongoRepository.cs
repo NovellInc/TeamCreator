@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using DataModels.Interfaces;
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Dal.Interfaces
 {
@@ -20,24 +21,34 @@ namespace Dal.Interfaces
         TModel Get<TModel>(ObjectId id) where TModel : IMongoModel;
 
         /// <summary>
-        /// Получает данные согласно фильтру.
+        /// Получает данные постранично согласно фильтру.
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="model">Фильтр.</param>
         /// <param name="page">Номер страницы из выборки элементов.</param>
-        /// <param name="items">Количество элементов на странице.</param>
+        /// <param name="items">Количество элементов на страницу.</param>
         /// <returns></returns>
-        List<TModel> Get<TModel>(TModel model, int page = 1, int items = 0);
+        IPagedList<TModel> Get<TModel>(TModel model, int page = 1, int items = 0);
 
         /// <summary>
-        /// Получает данные согласно фильтру.
+        /// Получает данные постранично согласно фильтру.
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="filter">Фильтр, представленный лямбда выражением.</param>
         /// <param name="page">Номер страницы из выборки элементов.</param>
-        /// <param name="items">Количество элементов на странице.</param>
+        /// <param name="items">Количество элементов на страницу.</param>
         /// <returns></returns>
-        List<TModel> Get<TModel>(Expression<Func<TModel, bool>> filter, int page = 1, int items = 0);
+        IPagedList<TModel> Get<TModel>(Expression<Func<TModel, bool>> filter, int page = 1, int items = 0);
+
+        /// <summary>
+        /// Получает список объектов постранично согласно фильтру.
+        /// </summary>
+        /// <typeparam name="TModel">Тип модели.</typeparam>
+        /// <param name="filter">Фильтр.</param>
+        /// <param name="page">Номер страницы из выборки элементов.</param>
+        /// <param name="items">Количество элементов на страницу.</param>
+        /// <returns></returns>
+        IPagedList<TModel> Get<TModel>(FilterDefinition<TModel> filter, int page = 1, int items = 0);
 
         /// <summary>
         /// Добавляет элемент в хранилище.

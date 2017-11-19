@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Reflection;
-using DataModels.Extensions;
+using Extensions;
 using NLog;
 using TelegramBot.NinjectModules;
 using TelegramBot.Services;

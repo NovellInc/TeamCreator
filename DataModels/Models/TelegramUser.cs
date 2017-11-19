@@ -26,6 +26,42 @@
         /// </summary>
         public int TelegramId { get; set; }
 
+        /// <summary>
+        /// Получает или задает псевдоним игрока в Telegram.
+        /// </summary>
+        public string TelegramNickname { get; set; }
+
+        /// <summary>
+        /// Получает или задает имя игрока в Telegram.
+        /// </summary>
+        public string TelegramName { get; set; }
+
+        /// <summary>
+        /// Получает или задает фамилию игрока в Telegram.
+        /// </summary>
+        public string TelegramSurname { get; set; }
+
+        /// <summary>
+        /// Получает или задает смещение от UTC часового пояса игрока в Telegram.
+        /// </summary>
+        public int TelegramTimeZone { get; set; }
+
+        /// <summary>
+        /// Получает или задает код языка в Telegram.
+        /// </summary>
+        public string TelegramLanguageCode { get; set; }
+
+        /// <summary>
+        /// Получает ссылку на пользователя Telegram или ФИ.
+        /// </summary>
+        /// <returns></returns>
+        public string GetTelegramLink()
+        {
+            return !string.IsNullOrEmpty(this.TelegramNickname)
+                ? $"@{this.TelegramNickname}"
+                : $"{this.TelegramName} {this.TelegramSurname}".Trim();
+        }
+
         protected bool Equals(TelegramUser other)
         {
             return TelegramId == other.TelegramId;
