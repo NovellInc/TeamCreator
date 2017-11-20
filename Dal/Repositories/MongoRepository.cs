@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 using Dal.Extensions;
 using Dal.Interfaces;
@@ -13,7 +12,7 @@ namespace Dal.Repositories
     /// <summary>
     /// Модель хранилища MongoDB.
     /// </summary>
-    public class MongoRepository : IMongoRepository
+    public sealed class MongoRepository : IMongoRepository
     {
         /// <summary>
         /// Поле идентификатора в хранилище.
@@ -54,7 +53,7 @@ namespace Dal.Repositories
         /// <param name="page">Номер страницы из выборки элементов.</param>
         /// <param name="items">Количество элементов на страницу.</param>
         /// <returns>Возвращает список объектов.</returns>
-        public IPagedList<TModel> Get<TModel>(TModel model, int page = 1, int items = 0)
+        public IPagedList<TModel> Get<TModel>(TModel model, int page = 1, int items = 0) where TModel : IMongoModel
         {
             if (page < 1 || items < 0)
             {
@@ -74,7 +73,7 @@ namespace Dal.Repositories
         /// <param name="page">Номер страницы из выборки элементов.</param>
         /// <param name="items">Количество элементов на страницу.</param>
         /// <returns></returns>
-        public IPagedList<TModel> Get<TModel>(Expression<Func<TModel, bool>> filter, int page = 1, int items = 0)
+        public IPagedList<TModel> Get<TModel>(Expression<Func<TModel, bool>> filter, int page = 1, int items = 0) where TModel : IMongoModel
         {
             if (page < 1 || items < 0)
             {
@@ -94,7 +93,7 @@ namespace Dal.Repositories
         /// <param name="page">Номер страницы из выборки элементов.</param>
         /// <param name="items">Количество элементов на страницу.</param>
         /// <returns>Возвращает список объектов.</returns>
-        public IPagedList<TModel> Get<TModel>(FilterDefinition<TModel> filter, int page = 1, int items = 0)
+        public IPagedList<TModel> Get<TModel>(FilterDefinition<TModel> filter, int page = 1, int items = 0) where TModel : IMongoModel
         {
             if (page < 1 || items < 0)
             {
@@ -111,7 +110,7 @@ namespace Dal.Repositories
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="model">Элемент.</param>
-        public ObjectId Add<TModel>(TModel model) where TModel : class, IMongoModel
+        public ObjectId Add<TModel>(TModel model) where TModel : IMongoModel
         {
             model.Id = ObjectId.GenerateNewId();
             this.GetCollection<TModel>().InsertOne(model);
@@ -123,7 +122,7 @@ namespace Dal.Repositories
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="model">Обновлённый элемент.</param>
-        public void Update<TModel>(TModel model) where TModel : class, IMongoModel
+        public void Update<TModel>(TModel model) where TModel : IMongoModel
         {
             var filter = Builders<TModel>.Filter.Eq(IdField, model.Id);
             var update = model.ToMongoUpdateFilter();
@@ -138,7 +137,7 @@ namespace Dal.Repositories
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="model">Обновлённый элемент.</param>
-        public void Replace<TModel>(TModel model) where TModel : class, IMongoModel
+        public void Replace<TModel>(TModel model) where TModel : IMongoModel
         {
             var filter = Builders<TModel>.Filter.Eq(IdField, model.Id);
             this.GetCollection<TModel>().ReplaceOne(filter, model, new UpdateOptions { IsUpsert = true });
@@ -149,7 +148,7 @@ namespace Dal.Repositories
         /// </summary>
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="id">Идентификатор элемента.</param>
-        public void Delete<TModel>(ObjectId id)
+        public void Delete<TModel>(ObjectId id) where TModel : IMongoModel
         {
             var filter = Builders<TModel>.Filter.Eq(IdField, id);
             this.GetCollection<TModel>().DeleteOne(filter);

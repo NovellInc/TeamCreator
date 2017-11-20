@@ -5,7 +5,6 @@ using System.Net;
 using ApiClient.Exceptions;
 using ApiClient.Extensions;
 using ApiClient.Models;
-using DataModels.Extensions;
 using DataModels.Models;
 using Extensions;
 using Newtonsoft.Json;

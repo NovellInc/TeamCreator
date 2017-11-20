@@ -8,7 +8,7 @@ namespace Dal.Extensions
     /// <summary>
     /// Класс содержит обобщенные методы расширения. 
     /// </summary>
-    public static class TExtensions
+    public static class MongoModelExtensions
     {
         /// <summary>
         /// Преобразует данные объекта в фильтр для запроса в MongoDB.
@@ -16,7 +16,7 @@ namespace Dal.Extensions
         /// <typeparam name="TModel">Тип модели.</typeparam>
         /// <param name="model">Модель объекта.</param>
         /// <returns>Возвращает фильтр для поиска.</returns>
-        public static FilterDefinition<TModel> ToMongoFilter<TModel>(this TModel model)
+        public static FilterDefinition<TModel> ToMongoFilter<TModel>(this TModel model) where TModel : IMongoModel
         {
             if (model == null)
             {

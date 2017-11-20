@@ -8,7 +8,7 @@
         /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="TelegramUser"/>.
         /// </summary>
-        internal TelegramUser()
+        public TelegramUser()
         {
         }
 

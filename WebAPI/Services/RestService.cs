@@ -42,7 +42,7 @@ namespace WebAPI.Services
             }
 
             this._baseAddress = baseAddress;
-            var selfHostConfiguraiton = new HttpSelfHostConfiguration(this._baseAddress);
+            var selfHostConfiguraiton = new HttpSelfHostConfiguration(new Uri(this._baseAddress));
             selfHostConfiguraiton.MapHttpAttributeRoutes();
             selfHostConfiguraiton.DependencyResolver = new NinjectDependencyResolver(CustomWebApiModule.CreateKernel(selfHostConfiguraiton, mongoRepository));
             selfHostConfiguraiton.EnsureInitialized();

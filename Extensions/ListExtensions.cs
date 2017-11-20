@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DataModels.Extensions
+namespace Extensions
 {
     /// <summary>
     /// Расширения для перечислений. 

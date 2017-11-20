@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
 [assembly: AssemblyTitle("Team Creator Telegram Bot")]
-[assembly: AssemblyDescription("Телеграм бот для взаимодействия с API TeamCreator")]
+[assembly: AssemblyDescription("Телеграм бот для взаимодействия с сервисом TeamCreator")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("TelegramBot")]
