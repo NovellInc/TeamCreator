@@ -32,11 +32,17 @@ namespace WebAPI.NinjectModules
                     .To<MongoRepository>()
                     .InSingletonScope()
                     .WithConstructorArgument("mongoUrl", mongoUrl);
+                var repository = this.Kernel?.Get<IMongoRepository>();
+                if (repository == null)
+                {
+                    throw new ArgumentNullException(nameof(repository));
+                }
+
                 this.Bind<RestService>()
                     .ToSelf()
                     .InSingletonScope()
                     .WithConstructorArgument("baseAddress", ConfigurationManager.AppSettings["baseAddress"])
-                    .WithConstructorArgument("mongoRepository", this.Kernel.Get<IMongoRepository>());
+                    .WithConstructorArgument("mongoRepository", repository);
             }
             catch (Exception e)
             {

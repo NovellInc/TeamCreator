@@ -57,11 +57,11 @@ namespace WebAPI.Controllers
         [HttpGet]
         [ResponseType(typeof(Player))]
         [Route("player/{id}")]
-        public IHttpActionResult GetPlayer([FromUri] ObjectId id)
+        public IHttpActionResult GetPlayer([FromUri] string id)
         {
             try
             {
-                return this.Ok(this._mongoRepository.Get<Player>(id));
+                return this.Ok(this._mongoRepository.Get<Player>(ObjectId.Parse(id)));
             }
             catch (Exception)
             {
@@ -82,26 +82,6 @@ namespace WebAPI.Controllers
             try
             {
                 return this.Ok(this._mongoRepository.Add(player));
-            }
-            catch (Exception)
-            {
-                return this.BadRequest();
-            }
-        }
-
-        /// <summary>
-        /// Удаляет игрока.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpPost]
-        [Route("player")]
-        public IHttpActionResult DeletePlayer([FromBody] ObjectId id)
-        {
-            try
-            {
-                this._mongoRepository.Delete<Player>(id);
-                return this.Ok();
             }
             catch (Exception)
             {

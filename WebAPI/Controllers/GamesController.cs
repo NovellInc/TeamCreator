@@ -5,6 +5,7 @@ using Dal.Extensions;
 using Dal.Interfaces;
 using DataModels.Interfaces;
 using DataModels.Models;
+using Extensions;
 using MongoDB.Bson;
 
 namespace WebAPI.Controllers
@@ -57,11 +58,11 @@ namespace WebAPI.Controllers
         [HttpGet]
         [ResponseType(typeof(Game))]
         [Route("game/{id}")]
-        public IHttpActionResult GetGame([FromUri] ObjectId id)
+        public IHttpActionResult GetGame([FromUri] string id)
         {
             try
             {
-                return this.Ok(this._mongoRepository.Get<Game>(id));
+                return this.Ok(this._mongoRepository.Get<Game>(ObjectId.Parse(id)));
             }
             catch (Exception)
             {
@@ -90,17 +91,43 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
+        /// Обновляет данные об Игре.
+        /// </summary>
+        /// <param name="game">Игра.</param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("game")]
+        public IHttpActionResult UpdateGame([FromBody] Game game)
+        {
+            if (game.Id.IsDefault())
+            {
+                return this.BadRequest();
+            }
+
+            try
+            {
+                this._mongoRepository.Update(game);
+                return this.Ok();
+            }
+            catch (Exception)
+            {
+                return this.BadRequest();
+            }
+        }
+
+        /// <summary>
         /// Удаляет Игру.
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">Идентификатор Игры.</param>
+        /// <param name="creatorId">Идентификатор создателя Игры.</param>
         /// <returns></returns>
         [HttpPost]
-        [Route("game")]
-        public IHttpActionResult DeleteGame([FromBody] ObjectId id)
+        [Route("game/{id}")]
+        public IHttpActionResult DeleteGame(string id, [FromBody] string creatorId)
         {
             try
             {
-                this._mongoRepository.Delete<Game>(id);
+                this._mongoRepository.Delete<Game>(ObjectId.Parse(id));
                 return this.Ok();
             }
             catch (Exception)

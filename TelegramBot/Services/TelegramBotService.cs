@@ -624,7 +624,8 @@ namespace TelegramBot.Services
             string timeZoneDescription;
             TimeZone.TryGetValue((TimeZoneOffset) timeZone, out timeZoneDescription);
             timeZoneDescription = !string.IsNullOrEmpty(timeZoneDescription) ? $" ({timeZoneDescription})" : string.Empty;
-            await this.BotClient.EditMessageTextAsync(chat, messageId, $"{player}, Ваш часовой пояс{timeZoneDescription} сохранён");
+            string name = string.IsNullOrEmpty(player.TelegramNickname) ? player.TelegramName : player.TelegramNickname;
+            await this.BotClient.EditMessageTextAsync(chat, messageId, $"{name}, Ваш часовой пояс{timeZoneDescription} сохранён");
         }
 
         /// <summary>
