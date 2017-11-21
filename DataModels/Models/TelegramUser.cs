@@ -50,18 +50,7 @@
         /// Получает или задает код языка в Telegram.
         /// </summary>
         public string TelegramLanguageCode { get; set; }
-
-        /// <summary>
-        /// Получает ссылку на пользователя Telegram или ФИ.
-        /// </summary>
-        /// <returns></returns>
-        public string GetTelegramLink()
-        {
-            return !string.IsNullOrEmpty(this.TelegramNickname)
-                ? $"@{this.TelegramNickname}"
-                : $"{this.TelegramName} {this.TelegramSurname}".Trim();
-        }
-
+        
         protected bool Equals(TelegramUser other)
         {
             return TelegramId == other.TelegramId;

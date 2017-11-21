@@ -10,19 +10,19 @@ namespace TelegramBot.Models
         /// <summary>
         /// 
         /// </summary>
-        [Description("+2 Калининград")]
-        Калининград = 2,
+        //[Description("+2 Калининград")]
+        //Калининград = 2,
 
         /// <summary>
         /// 
         /// </summary>
-        [Description("+3 Москва")]
-        Москва = 3,
+        //[Description("+3 Москва")]
+        //Москва = 3,
 
         /// <summary>
         /// 
         /// </summary>
-        [Description("+5 Екатеринбург, Уфа")]
+        [Description("+5 Екатеринбург")]
         Екатеринбург = 5
     }
 }

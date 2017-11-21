@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Net;
 using System.Web.Http;
 using System.Web.Http.Description;
 using Dal.Extensions;
 using Dal.Interfaces;
 using DataModels.Interfaces;
 using DataModels.Models;
+using Extensions;
 using MongoDB.Bson;
 
 namespace WebAPI.Controllers
@@ -13,7 +15,7 @@ namespace WebAPI.Controllers
     /// Контроллер работы с игроками.
     /// </summary>
     [RoutePrefix("api")]
-    public sealed class PlayersController : ApiController
+    public sealed class PlayersController : ApiController, ICrudController<Player>
     {
         /// <summary>
         /// Хранилище.
@@ -37,7 +39,7 @@ namespace WebAPI.Controllers
         [HttpGet]
         [ResponseType(typeof(IPagedList<Player>))]
         [Route("players")]
-        public IHttpActionResult GetPlayers([FromUri] Player player)
+        public IHttpActionResult Get([FromUri] Player player)
         {
             try
             {
@@ -53,11 +55,11 @@ namespace WebAPI.Controllers
         /// Получает игру по идентификатору.
         /// </summary>
         /// <param name="id">Идентификатор.</param>
-        /// <returns></returns>
+        /// <returns>Возвращает игрока.</returns>
         [HttpGet]
         [ResponseType(typeof(Player))]
         [Route("player/{id}")]
-        public IHttpActionResult GetPlayer([FromUri] string id)
+        public IHttpActionResult Get([FromUri] string id)
         {
             try
             {
@@ -77,7 +79,7 @@ namespace WebAPI.Controllers
         [HttpPost]
         [ResponseType(typeof(ObjectId))]
         [Route("player")]
-        public IHttpActionResult AddPlayer([FromBody] Player player)
+        public IHttpActionResult Create([FromBody] Player player)
         {
             try
             {
@@ -87,6 +89,36 @@ namespace WebAPI.Controllers
             {
                 return this.BadRequest();
             }
+        }
+
+        /// <summary>
+        /// Обновляет данные об игроке.
+        /// </summary>
+        /// <param name="player">Игрок.</param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("player")]
+        public IHttpActionResult Update([FromBody] Player player)
+        {
+            if (player.Id.IsDefault())
+            {
+                return this.BadRequest();
+            }
+
+            try
+            {
+                this._mongoRepository.Update(player);
+                return this.StatusCode(HttpStatusCode.NoContent);
+            }
+            catch (Exception)
+            {
+                return this.BadRequest();
+            }
+        }
+
+        public IHttpActionResult Delete(string id, string creatorId)
+        {
+            return this.NotFound();
         }
     }
 }

@@ -1,12 +1,8 @@
 ﻿using Dal.Extensions;
-using DataModels.Enums;
-using DataModels.Extensions;
 using DataModels.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using TelegramBot.Extensions;
-using TelegramBot.Models;
 
 namespace UnitTests
 {

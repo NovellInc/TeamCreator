@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Web.Http;
 using System.Web.Http.Description;
 using Dal.Extensions;
@@ -14,7 +15,7 @@ namespace WebAPI.Controllers
     /// Контроллер работы с Играми.
     /// </summary>
     [RoutePrefix("api")]
-    public sealed class GamesController : ApiController
+    public sealed class GamesController : ApiController, ICrudController<Game>
     {
         /// <summary>
         /// Хранилище.
@@ -38,7 +39,7 @@ namespace WebAPI.Controllers
         [HttpGet]
         [ResponseType(typeof(IPagedList<Game>))]
         [Route("games")]
-        public IHttpActionResult GetGames([FromUri] Game game)
+        public IHttpActionResult Get([FromUri] Game game)
         {
             try
             {
@@ -57,8 +58,8 @@ namespace WebAPI.Controllers
         /// <returns></returns>
         [HttpGet]
         [ResponseType(typeof(Game))]
-        [Route("game/{id}")]
-        public IHttpActionResult GetGame([FromUri] string id)
+        [Route("games/{id}")]
+        public IHttpActionResult Get([FromUri] string id)
         {
             try
             {
@@ -78,7 +79,7 @@ namespace WebAPI.Controllers
         [HttpPost]
         [ResponseType(typeof(ObjectId))]
         [Route("game")]
-        public IHttpActionResult AddGame([FromBody] Game game)
+        public IHttpActionResult Create([FromBody] Game game)
         {
             try
             {
@@ -94,10 +95,10 @@ namespace WebAPI.Controllers
         /// Обновляет данные об Игре.
         /// </summary>
         /// <param name="game">Игра.</param>
-        /// <returns></returns>
+        /// <returns>Возвращает Игру.</returns>
         [HttpPut]
         [Route("game")]
-        public IHttpActionResult UpdateGame([FromBody] Game game)
+        public IHttpActionResult Update([FromBody] Game game)
         {
             if (game.Id.IsDefault())
             {
@@ -107,7 +108,7 @@ namespace WebAPI.Controllers
             try
             {
                 this._mongoRepository.Update(game);
-                return this.Ok();
+                return this.StatusCode(HttpStatusCode.NoContent);
             }
             catch (Exception)
             {
@@ -123,12 +124,18 @@ namespace WebAPI.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("game/{id}")]
-        public IHttpActionResult DeleteGame(string id, [FromBody] string creatorId)
+        public IHttpActionResult Delete(string id, [FromBody] string creatorId)
         {
             try
             {
-                this._mongoRepository.Delete<Game>(ObjectId.Parse(id));
-                return this.Ok();
+                var gameId = ObjectId.Parse(id);
+                if (this._mongoRepository.Get<Game>(gameId).CreatorId.ToString() != creatorId)
+                {
+                    throw new ArgumentException("Удалять Игру может только создатель Игры", nameof(creatorId));
+                }
+
+                this._mongoRepository.Delete<Game>(gameId);
+                return this.StatusCode(HttpStatusCode.NoContent);
             }
             catch (Exception)
             {

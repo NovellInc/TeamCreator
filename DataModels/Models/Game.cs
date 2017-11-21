@@ -138,7 +138,7 @@ namespace DataModels.Models
             set
             {
                 this._firstTeamId = value;
-                this.HasFirstTeam = value.IsDefault();
+                this.HasFirstTeam = !value.IsDefault();
             }
         }
 
@@ -160,7 +160,7 @@ namespace DataModels.Models
             set
             {
                 this._secondTeamId = value;
-                this.HasSecondTeam = value.IsDefault();
+                this.HasSecondTeam = !value.IsDefault();
             }
         }
 
@@ -182,7 +182,7 @@ namespace DataModels.Models
             set
             {
                 this._sportGroundId = value;
-                this.HasSportGround = value.IsDefault();
+                this.HasSportGround = !value.IsDefault();
             }
         }
 

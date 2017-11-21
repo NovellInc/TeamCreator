@@ -98,6 +98,11 @@
         /// <summary>
         /// Команда для отказа участвовать в игре.
         /// </summary>
-        DeclineCommand = 18
+        DeclineCommand = 18,
+
+        /// <summary>
+        /// Команда для обновления информации об игре.
+        /// </summary>
+        RefreshCommand = 19
     }
 }

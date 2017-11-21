@@ -110,7 +110,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controllers\GamesController.cs" />
+    <Compile Include="Controllers\ICrudController.cs" />
     <Compile Include="Controllers\PlayersController.cs" />
+    <Compile Include="Controllers\TeamsController.cs" />
     <Compile Include="NinjectModules\CommonModule.cs" />
     <Compile Include="NinjectModules\CustomWebApiModule.cs" />
     <Compile Include="Program.cs" />
